@@ -1,0 +1,30 @@
+# Local secrets and overrides
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+
+# Runtime data
+airflow/logs/*
+!airflow/logs/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+great_expectations/uncommitted/
+
+# dbt runtime output
+dbt/logs/
+dbt/target/
+dbt/dbt_packages/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

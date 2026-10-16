@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.coverage
+htmlcov
+airflow/logs
+data/processed
+dbt/logs
+dbt/target
+dbt/dbt_packages
+great_expectations/uncommitted
