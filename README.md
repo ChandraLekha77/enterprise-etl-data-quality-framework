@@ -40,9 +40,23 @@ The Docker environment provides isolated services for:
 
 Copy `.env.example` to `.env`, replace every `CHANGE_ME` value, and follow the [local environment runbook](docs/runbooks/local_environment.md). The Compose configuration fails early when a required secret or account value is missing.
 
+## Python development
+
+Create a Python 3.12 virtual environment and install the pinned development dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Runtime settings are read from environment variables only. `AppSettings.from_env()` validates required database endpoints, rejects placeholder secrets, builds encoded SQLAlchemy URLs, and keeps passwords out of object representations and connection errors.
+
 ## Delivery status
 
 - Day 1: repository structure complete
 - Day 2: architecture, contracts, rules, dictionary, and mappings complete
 - Day 3: Docker services for PostgreSQL, SQL Server, and Airflow complete
-- Runtime implementation: scheduled for subsequent delivery days
+- Day 4: control, staging, audit, quality, reconciliation, and status schemas complete
+- Day 5: deterministic synthetic source fixtures and expected reconciliation outputs complete
+- Day 6: validated SQLAlchemy configuration, pooled connections, health checks, and tests complete

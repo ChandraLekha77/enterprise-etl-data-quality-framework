@@ -12,12 +12,13 @@ This runbook starts the project infrastructure for development and integration t
 | `warehouse-postgres` | PostgreSQL staging, core, control, and quality data | `127.0.0.1:5432` | `warehouse_postgres_data` |
 | `airflow-postgres` | Airflow metadata only | Internal network only | `airflow_postgres_data` |
 | `billing-sqlserver` | SQL Server billing source | `127.0.0.1:1433` | `sqlserver_data` |
+| `billing-sqlserver-init` | Idempotent billing schema, read-only login, and sample-data initialization | None | Uses SQL Server data store |
 | `airflow-init` | One-time Airflow migration and administrator creation | None | Uses Airflow metadata store |
 | `airflow-api-server` | Airflow API and user interface | `127.0.0.1:8080` | `airflow_logs` |
 | `airflow-scheduler` | Scheduling and LocalExecutor task execution | Internal network only | `airflow_logs` |
 | `airflow-dag-processor` | DAG parsing | Internal network only | `airflow_logs` |
 
-Airflow uses `LocalExecutor`. This avoids adding a Redis or message-broker dependency that is outside the approved project stack.
+Airflow uses `LocalExecutor`. This avoids adding a Redis or message-broker dependency that is outside the approved project stack. The project Airflow image extends the pinned official image with the pinned Python dependencies and Microsoft ODBC Driver 18 required by the SQL Server source.
 
 ## Prerequisites
 
@@ -48,7 +49,7 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-Edit `.env` and replace every `CHANGE_ME` value. Use different passwords for the CRM database, warehouse, Airflow metadata database, SQL Server administrator, and Airflow administrator. SQL Server requires a complex password containing uppercase, lowercase, numeric, and symbol characters.
+Edit `.env` and replace every `CHANGE_ME` value. Use different passwords for the CRM database, warehouse, Airflow metadata database, SQL Server administrator, SQL Server read-only account, and Airflow administrator. SQL Server requires a complex password containing uppercase, lowercase, numeric, and symbol characters. For the local SQLCMD bootstrap, do not use a single quote in `MSSQL_APP_USER` or `MSSQL_APP_PASSWORD`.
 
 Never commit `.env`. The repository ignores it by default.
 
@@ -62,9 +63,17 @@ docker compose config --quiet
 
 The command must exit successfully. A missing required value produces an error before any container starts.
 
-## Initialize Airflow
+## Build and initialize
 
-Run the one-time migration and administrator creation service:
+Build the project Airflow image:
+
+```powershell
+docker compose build airflow-init
+```
+
+The first PostgreSQL startup applies the CRM source and warehouse DDL automatically, including the central documented-rule registry. SQL Server is initialized by `billing-sqlserver-init` after its health check passes.
+
+Initialize Airflow with the one-time migration and administrator creation service:
 
 ```powershell
 docker compose up airflow-init
@@ -79,7 +88,7 @@ docker compose up -d
 docker compose ps
 ```
 
-Wait until PostgreSQL, SQL Server, the Airflow API server, and the Airflow scheduler report healthy. The DAG processor does not expose a separate port and is considered ready when its container remains running without restart loops.
+Wait until PostgreSQL, SQL Server, the Airflow API server, and the Airflow scheduler report healthy. `billing-sqlserver-init` and `airflow-init` should show a successful exit. The DAG processor does not expose a separate port and is considered ready when its container remains running without restart loops.
 
 Open `http://127.0.0.1:8080` and sign in with `AIRFLOW_ADMIN_USERNAME` and `AIRFLOW_ADMIN_PASSWORD` from the local `.env` file.
 
@@ -108,6 +117,27 @@ Validate that Airflow can parse configured DAGs:
 ```powershell
 docker compose exec airflow-scheduler airflow dags list
 ```
+
+Run database integration tests against the local services from an environment configured with host addresses and host-side ports. This PowerShell snippet loads the local `.env` into the current process without printing its values, then replaces container addresses with local endpoints:
+
+```powershell
+Get-Content .env |
+    Where-Object { $_ -match '^\s*[^#][^=]*=' } |
+    ForEach-Object {
+        $name, $value = $_ -split '=', 2
+        [Environment]::SetEnvironmentVariable($name.Trim(), $value.Trim(), 'Process')
+    }
+$env:RUN_DATABASE_INTEGRATION_TESTS = "1"
+$env:CRM_POSTGRES_HOST = "127.0.0.1"
+$env:CRM_POSTGRES_PORT = $env:CRM_POSTGRES_HOST_PORT
+$env:WAREHOUSE_POSTGRES_HOST = "127.0.0.1"
+$env:WAREHOUSE_POSTGRES_PORT = $env:WAREHOUSE_POSTGRES_HOST_PORT
+$env:MSSQL_HOST = "127.0.0.1"
+$env:MSSQL_PORT = $env:MSSQL_HOST_PORT
+.\.venv\Scripts\python.exe -m pytest -m integration
+```
+
+The host-side port variables are intentionally separate from the fixed container ports used by Airflow.
 
 ## Stop and restart
 
@@ -178,6 +208,14 @@ Confirm `airflow-postgres` is healthy, all three Airflow secrets are populated, 
 
 ```powershell
 docker compose up airflow-init
+```
+
+### SQL Server initialization fails
+
+Inspect `billing-sqlserver-init` logs, verify both SQL Server passwords meet the complexity policy, and ensure the application username and password do not contain a single quote. The initializer is idempotent and can be rerun safely:
+
+```powershell
+docker compose up billing-sqlserver-init
 ```
 
 ### Port conflict

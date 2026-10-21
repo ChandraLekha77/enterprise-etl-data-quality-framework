@@ -17,7 +17,12 @@ x-postgres-healthcheck: &postgres-healthcheck
 
 x-airflow-common: &airflow-common
   <<: *service-security
-  image: ${AIRFLOW_IMAGE:-apache/airflow:3.3.1-python3.12}
+  image: ${AIRFLOW_PROJECT_IMAGE:-enterprise-etl-quality-airflow:3.3.1}
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+    args:
+      AIRFLOW_BASE_IMAGE: ${AIRFLOW_IMAGE:-apache/airflow:3.3.1-python3.12}
   user: "${AIRFLOW_UID:-50000}:0"
   init: true
   environment: &airflow-environment
@@ -34,7 +39,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__LOGGING__LOGGING_LEVEL: INFO
     AIRFLOW__API__EXPOSE_CONFIG: "false"
     AIRFLOW__API__EXPOSE_STACKTRACE: "false"
-    PYTHONPATH: /opt/airflow/project
+    PYTHONPATH: /opt/airflow/project/src
   volumes:
     - ./airflow/dags:/opt/airflow/dags:ro
     - ./airflow/config:/opt/airflow/config:ro
@@ -55,9 +60,10 @@ services:
       POSTGRES_PASSWORD: ${CRM_POSTGRES_PASSWORD:?Set CRM_POSTGRES_PASSWORD}
       POSTGRES_DB: ${CRM_POSTGRES_DB:?Set CRM_POSTGRES_DB}
     ports:
-      - "127.0.0.1:${CRM_POSTGRES_PORT:-5433}:5432"
+      - "127.0.0.1:${CRM_POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - crm_postgres_data:/var/lib/postgresql/data
+      - ./sql/postgresql/source:/docker-entrypoint-initdb.d:ro
     healthcheck:
       <<: *postgres-healthcheck
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -73,10 +79,10 @@ services:
       POSTGRES_PASSWORD: ${WAREHOUSE_POSTGRES_PASSWORD:?Set WAREHOUSE_POSTGRES_PASSWORD}
       POSTGRES_DB: ${WAREHOUSE_POSTGRES_DB:?Set WAREHOUSE_POSTGRES_DB}
     ports:
-      - "127.0.0.1:${WAREHOUSE_POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${WAREHOUSE_POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - warehouse_postgres_data:/var/lib/postgresql/data
-      - ./docker/postgresql/init:/docker-entrypoint-initdb.d:ro
+      - ./sql/postgresql/ddl:/docker-entrypoint-initdb.d:ro
     healthcheck:
       <<: *postgres-healthcheck
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -109,7 +115,7 @@ services:
       MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD}
     ports:
-      - "127.0.0.1:${MSSQL_PORT:-1433}:1433"
+      - "127.0.0.1:${MSSQL_HOST_PORT:-1433}:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
       - ./docker/sqlserver/init:/opt/project/init:ro
@@ -121,6 +127,38 @@ services:
       test:
         - CMD-SHELL
         - /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -b -o /dev/null
+    networks:
+      - etl-backend
+
+  billing-sqlserver-init:
+    <<: *service-security
+    image: ${MSSQL_IMAGE:-mcr.microsoft.com/mssql/server:2022-CU21-ubuntu-22.04}
+    platform: linux/amd64
+    restart: "no"
+    depends_on:
+      billing-sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD}
+    entrypoint: ["/opt/mssql-tools18/bin/sqlcmd"]
+    command:
+      - -C
+      - -S
+      - billing-sqlserver
+      - -U
+      - sa
+      - -P
+      - ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD}
+      - -b
+      - -v
+      - BillingUser=${MSSQL_APP_USER:?Set MSSQL_APP_USER}
+      - BillingPassword=${MSSQL_APP_PASSWORD:?Set MSSQL_APP_PASSWORD}
+      - -i
+      - /opt/project/init/001_initialize.sql
+    volumes:
+      - ./docker/sqlserver/init:/opt/project/init:ro
+      - ./sql/sqlserver/ddl:/opt/project/ddl:ro
+      - ./data/raw/sqlserver:/opt/project/seed:ro
     networks:
       - etl-backend
 
@@ -161,6 +199,39 @@ services:
     depends_on:
       airflow-init:
         condition: service_completed_successfully
+      billing-sqlserver-init:
+        condition: service_completed_successfully
+      crm-postgres:
+        condition: service_healthy
+      warehouse-postgres:
+        condition: service_healthy
+    environment:
+      <<: *airflow-environment
+      CRM_POSTGRES_USER: ${CRM_POSTGRES_USER:?Set CRM_POSTGRES_USER}
+      CRM_POSTGRES_PASSWORD: ${CRM_POSTGRES_PASSWORD:?Set CRM_POSTGRES_PASSWORD}
+      CRM_POSTGRES_HOST: ${CRM_POSTGRES_HOST:-crm-postgres}
+      CRM_POSTGRES_PORT: ${CRM_POSTGRES_PORT:-5432}
+      CRM_POSTGRES_DB: ${CRM_POSTGRES_DB:?Set CRM_POSTGRES_DB}
+      CRM_POSTGRES_SSL_MODE: ${CRM_POSTGRES_SSL_MODE:-disable}
+      WAREHOUSE_POSTGRES_USER: ${WAREHOUSE_POSTGRES_USER:?Set WAREHOUSE_POSTGRES_USER}
+      WAREHOUSE_POSTGRES_PASSWORD: ${WAREHOUSE_POSTGRES_PASSWORD:?Set WAREHOUSE_POSTGRES_PASSWORD}
+      WAREHOUSE_POSTGRES_HOST: ${WAREHOUSE_POSTGRES_HOST:-warehouse-postgres}
+      WAREHOUSE_POSTGRES_PORT: ${WAREHOUSE_POSTGRES_PORT:-5432}
+      WAREHOUSE_POSTGRES_DB: ${WAREHOUSE_POSTGRES_DB:?Set WAREHOUSE_POSTGRES_DB}
+      WAREHOUSE_POSTGRES_SSL_MODE: ${WAREHOUSE_POSTGRES_SSL_MODE:-disable}
+      MSSQL_APP_USER: ${MSSQL_APP_USER:?Set MSSQL_APP_USER}
+      MSSQL_APP_PASSWORD: ${MSSQL_APP_PASSWORD:?Set MSSQL_APP_PASSWORD}
+      MSSQL_HOST: ${MSSQL_HOST:-billing-sqlserver}
+      MSSQL_PORT: ${MSSQL_PORT:-1433}
+      MSSQL_DATABASE: ${MSSQL_DATABASE:-billing_source}
+      MSSQL_ODBC_DRIVER: ${MSSQL_ODBC_DRIVER:-ODBC Driver 18 for SQL Server}
+      MSSQL_ENCRYPT: ${MSSQL_ENCRYPT:-true}
+      MSSQL_TRUST_SERVER_CERTIFICATE: ${MSSQL_TRUST_SERVER_CERTIFICATE:-true}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-10}
+      DB_POOL_TIMEOUT_SECONDS: ${DB_POOL_TIMEOUT_SECONDS:-30}
+      DB_POOL_RECYCLE_SECONDS: ${DB_POOL_RECYCLE_SECONDS:-1800}
+      DB_CONNECT_TIMEOUT_SECONDS: ${DB_CONNECT_TIMEOUT_SECONDS:-10}
     command: scheduler
     healthcheck:
       interval: 15s
