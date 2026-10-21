@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "customer_id": "C000001",
+      "status": "suspended",
+      "status_updated_at": "2026-10-20T12:00:00Z"
+    },
+    {
+      "customer_id": "C000002",
+      "status": "inactive",
+      "status_updated_at": "2026-10-20T13:00:00Z"
+    },
+    {
+      "customer_id": "C000003",
+      "status": "inactive",
+      "status_updated_at": "2026-10-19T08:00:00Z"
+    },
+    {
+      "customer_id": "C000004",
+      "status": "archived",
+      "status_updated_at": "2026-10-20T14:00:00Z"
+    }
+  ],
+  "next_page": null
+}

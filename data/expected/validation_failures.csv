@@ -1,0 +1,14 @@
+source_system,business_key,rule_id,severity,field_name,expected_outcome
+CRM_PG,C000002,DQ-CUS-006,WARNING,customer_id,accept_latest
+CRM_PG,C000004,DQ-CUS-002,ERROR,email,quarantine
+CRM_PG,C000005,DQ-CUS-003,ERROR,country_code,quarantine
+CRM_PG,C000006,DQ-CUS-005,ERROR,created_at,quarantine
+STATUS_API,C000004,DQ-CUS-004,ERROR,status,quarantine
+BILLING_MSSQL,T000005,DQ-TXN-002,ERROR,amount,quarantine
+BILLING_MSSQL,T000006,DQ-TXN-005,ERROR,customer_id,quarantine
+BILLING_MSSQL,T000007,DQ-TXN-003,ERROR,currency_code,quarantine
+BILLING_MSSQL,T000008,DQ-TXN-006,WARNING,transaction_id,accept_latest
+OPS_CSV,E000003,DQ-OPS-002,ERROR,event_type,quarantine
+OPS_CSV,E000004,DQ-OPS-003,ERROR,customer_id,quarantine
+OPS_CSV,E000005,DQ-OPS-004,WARNING,location_code,accept_with_null
+OPS_CSV,E000006,DQ-OPS-006,WARNING,event_id,accept_latest

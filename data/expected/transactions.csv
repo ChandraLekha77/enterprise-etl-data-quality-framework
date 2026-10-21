@@ -1,0 +1,6 @@
+transaction_id,customer_id,transaction_timestamp,amount,currency_code,transaction_status,payment_method,source_updated_at
+T000001,C000001,2026-10-20T10:00:00Z,100.00,USD,completed,card,2026-10-20T10:01:00Z
+T000002,C000002,2026-10-20T11:00:00Z,250.50,USD,completed,bank_transfer,2026-10-20T11:01:00Z
+T000003,C000003,2026-10-20T12:00:00Z,40.00,USD,refunded,card,2026-10-20T12:01:00Z
+T000004,C000001,2026-10-20T13:00:00Z,75.00,EUR,pending,,2026-10-20T13:01:00Z
+T000008,C000001,2026-10-20T17:00:00Z,125.00,USD,completed,card,2026-10-20T18:01:00Z

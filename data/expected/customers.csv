@@ -1,0 +1,4 @@
+customer_id,first_name,last_name,email,phone,country_code,status,status_source,source_created_at,source_updated_at
+C000001,Ava,Patel,ava.patel@example.com,+1-202-555-0101,US,suspended,STATUS_API,2026-01-10T14:00:00Z,2026-10-20T12:00:00Z
+C000002,Noah,Kim,noah.kim@example.com,+1-202-555-0102,CA,active,CRM_PG,2026-02-11T15:30:00Z,2026-10-20T14:00:00Z
+C000003,Mia,Garcia,mia.garcia@example.com,+1-202-555-0103,GB,suspended,CRM_PG,2026-03-12T08:15:00Z,2026-10-20T12:00:00Z

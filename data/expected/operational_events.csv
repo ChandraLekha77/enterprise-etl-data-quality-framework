@@ -1,0 +1,5 @@
+event_id,customer_id,event_type,event_timestamp,location_code,details
+E000001,C000001,service,2026-10-20T09:00:00Z,NYC01,Account verification completed
+E000002,C000002,shipment,2026-10-20T10:00:00Z,TOR02,Package dispatched
+E000005,C000003,support,2026-10-20T13:00:00Z,,Location should be cleared with a warning
+E000006,C000001,maintenance,2026-10-20T15:00:00Z,NYC01,Latest duplicate event

@@ -1,0 +1,11 @@
+source_system,rule_id,metric_name,group_key,source_value,target_value,tolerance,status
+CRM_PG,RC-ROW-001,row_accounting,,7.0000,7.0000,0.0000,PASS
+CRM_PG,RC-KEY-001,accepted_business_keys,,3.0000,3.0000,0.0000,PASS
+STATUS_API,RC-ROW-001,row_accounting,,4.0000,4.0000,0.0000,PASS
+STATUS_API,RC-KEY-001,accepted_business_keys,,3.0000,3.0000,0.0000,PASS
+BILLING_MSSQL,RC-ROW-001,row_accounting,,9.0000,9.0000,0.0000,PASS
+BILLING_MSSQL,RC-KEY-001,accepted_business_keys,,5.0000,5.0000,0.0000,PASS
+BILLING_MSSQL,RC-FIN-001,completed_amount,USD,475.5000,475.5000,0.0000,PASS
+BILLING_MSSQL,RC-FIN-002,refunded_amount,USD,40.0000,40.0000,0.0000,PASS
+OPS_CSV,RC-ROW-001,row_accounting,,7.0000,7.0000,0.0000,PASS
+OPS_CSV,RC-KEY-001,accepted_business_keys,,4.0000,4.0000,0.0000,PASS
