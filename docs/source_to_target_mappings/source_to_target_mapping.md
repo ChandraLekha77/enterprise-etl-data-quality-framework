@@ -15,7 +15,7 @@ Target: `stg.customer_raw`
 
 | Source field | Target column | Mapping | Required |
 |---|---|---|---:|
-| Generated | `staged_row_id` | Deterministic row identity assigned during staging | Yes |
+| Generated | `staged_row_id` | Database-generated staging row identity | Yes |
 | `customer_id` | `customer_id` | Preserve source text | Yes |
 | `first_name` | `first_name` | Preserve source text | Yes |
 | `last_name` | `last_name` | Preserve source text | Yes |
@@ -23,13 +23,14 @@ Target: `stg.customer_raw`
 | `phone` | `phone` | Preserve source text/null | No |
 | `country_code` | `country_code` | Preserve source text | Yes |
 | `status` | `status` | Preserve source text | Yes |
-| `created_at` | `created_at` | Preserve source timestamp representation | Yes |
-| `updated_at` | `updated_at` | Preserve source timestamp representation | Yes |
+| `created_at` | `created_at_raw` | Preserve source timestamp representation | Yes |
+| `updated_at` | `updated_at_raw` | Preserve source timestamp representation | Yes |
 | Pipeline context | `run_id` | Current execution ID | Yes |
 | Delivery registration | `batch_id` | Current CRM delivery ID | Yes |
 | Constant | `source_system` | `CRM_PG` | Yes |
 | `customer_id` | `source_record_id` | Preserve original representation | Yes |
 | `updated_at` | `source_updated_at` | Parse timestamp when valid | No |
+| Canonical raw row | `record_checksum` | SHA-256 digest used for idempotent loading | Yes |
 | Ingestion clock | `ingested_at` | Current UTC timestamp | Yes |
 
 ## Customer staging and API status to core
@@ -48,7 +49,7 @@ Target: `core.dim_customer`
 | `customer_raw.country_code` | `country_code` | Trim and uppercase | `TR-CUS-003`, `DQ-CUS-001`, `DQ-CUS-003` |
 | CRM `status`; API `status` | `status` | Select by documented timestamp precedence; lowercase | `TR-CUS-004`, `TR-CUS-006`, `DQ-CUS-004` |
 | CRM/API source selection | `status_source` | `STATUS_API` when API wins precedence; otherwise `CRM_PG` | `TR-CUS-006` |
-| `customer_raw.created_at` | `source_created_at` | Parse and convert to UTC | `TR-COM-002`, `DQ-CUS-001`, `DQ-CUS-005` |
+| `customer_raw.created_at_raw` | `source_created_at` | Parse and convert to UTC | `TR-COM-002`, `DQ-CUS-001`, `DQ-CUS-005` |
 | Winning status/customer timestamp | `source_updated_at` | Convert selected timestamp to UTC | `TR-COM-002`, `DQ-CUS-001` |
 | Winning staged record | `run_id` | Preserve execution lineage | `DQ-COM-004` |
 | Winning staged record | `batch_id` | Preserve delivery lineage | `DQ-COM-004` |
@@ -61,16 +62,18 @@ Target: `stg.customer_status_raw`
 
 | JSON field | Target column | Mapping | Required |
 |---|---|---|---:|
-| Generated | `staged_row_id` | Deterministic row identity | Yes |
+| Generated | `staged_row_id` | Database-generated staging row identity | Yes |
 | `customer_id` | `customer_id` | Preserve source text | Yes |
 | `status` | `status` | Preserve source text | Yes |
-| `status_updated_at` | `status_updated_at` | Preserve source timestamp representation | Yes |
+| `status_updated_at` | `status_updated_at_raw` | Preserve source timestamp representation | Yes |
+| Complete response object | `raw_payload` | Preserve the source JSON object for traceability | Yes |
 | Response pagination context | `page_token` | Token used to obtain the response page; null for first page | No |
 | Pipeline context | `run_id` | Current execution ID | Yes |
 | Delivery registration | `batch_id` | Current API request-window delivery ID | Yes |
 | Constant | `source_system` | `STATUS_API` | Yes |
 | `customer_id` | `source_record_id` | Preserve original representation | Yes |
 | `status_updated_at` | `source_updated_at` | Parse timestamp when valid | No |
+| Canonical raw row | `record_checksum` | SHA-256 digest used for idempotent loading | Yes |
 | Ingestion clock | `ingested_at` | Current UTC timestamp | Yes |
 
 ## Billing transaction to staging
@@ -80,20 +83,21 @@ Target: `stg.transaction_raw`
 
 | Source field | Target column | Mapping | Required |
 |---|---|---|---:|
-| Generated | `staged_row_id` | Deterministic row identity | Yes |
+| Generated | `staged_row_id` | Database-generated staging row identity | Yes |
 | `transaction_id` | `transaction_id` | Preserve source text | Yes |
 | `customer_id` | `customer_id` | Preserve source text | Yes |
-| `transaction_timestamp` | `transaction_timestamp` | Preserve source timestamp representation | Yes |
-| `amount` | `amount` | Preserve exact decimal source representation | Yes |
+| `transaction_timestamp` | `transaction_timestamp_raw` | Preserve source timestamp representation | Yes |
+| `amount` | `amount_raw` | Preserve exact decimal source representation | Yes |
 | `currency_code` | `currency_code` | Preserve source text | Yes |
 | `transaction_status` | `transaction_status` | Preserve source text | Yes |
 | `payment_method` | `payment_method` | Preserve source text/null | No |
-| `updated_at` | `updated_at` | Preserve source timestamp representation | Yes |
+| `updated_at` | `updated_at_raw` | Preserve source timestamp representation | Yes |
 | Pipeline context | `run_id` | Current execution ID | Yes |
 | Delivery registration | `batch_id` | Current billing delivery ID | Yes |
 | Constant | `source_system` | `BILLING_MSSQL` | Yes |
 | `transaction_id` | `source_record_id` | Preserve original representation | Yes |
 | `updated_at` | `source_updated_at` | Parse timestamp when valid | No |
+| Canonical raw row | `record_checksum` | SHA-256 digest used for idempotent loading | Yes |
 | Ingestion clock | `ingested_at` | Current UTC timestamp | Yes |
 
 ## Transaction staging to core
@@ -105,12 +109,12 @@ Target: `core.fact_transaction`
 |---|---|---|---|
 | `transaction_id` | `transaction_id` | Trim; deduplicate by greatest `updated_at` | `TR-TXN-001`, `TR-TXN-005`, `DQ-TXN-001`, `DQ-COM-003` |
 | `customer_id` | `customer_id` | Trim and resolve against conformed customer | `TR-TXN-001`, `DQ-TXN-001`, `DQ-TXN-005` |
-| `transaction_timestamp` | `transaction_timestamp` | Parse and convert to UTC | `TR-COM-002`, `DQ-TXN-001` |
-| `amount` | `amount` | Parse fixed precision and round to two decimals | `TR-COM-003`, `TR-TXN-004`, `DQ-TXN-001`, `DQ-TXN-002` |
+| `transaction_timestamp_raw` | `transaction_timestamp` | Parse and convert to UTC | `TR-COM-002`, `DQ-TXN-001` |
+| `amount_raw` | `amount` | Parse fixed precision and round to two decimals | `TR-COM-003`, `TR-TXN-004`, `DQ-TXN-001`, `DQ-TXN-002` |
 | `currency_code` | `currency_code` | Trim and uppercase | `TR-TXN-001`, `TR-TXN-002`, `DQ-TXN-003` |
 | `transaction_status` | `transaction_status` | Trim and lowercase | `TR-TXN-001`, `TR-TXN-003`, `DQ-TXN-004` |
 | `payment_method` | `payment_method` | Trim; blank becomes null | `TR-TXN-001` |
-| `updated_at` | `source_updated_at` | Parse and convert to UTC | `TR-COM-002`, `DQ-TXN-001` |
+| `updated_at_raw` | `source_updated_at` | Parse and convert to UTC | `TR-COM-002`, `DQ-TXN-001` |
 | Winning staged record | `run_id` | Preserve execution lineage | `DQ-COM-004` |
 | Winning staged record | `batch_id` | Preserve delivery lineage | `DQ-COM-004` |
 | Transformation clock | `loaded_at` | Current UTC timestamp | `DQ-COM-004` |
@@ -122,11 +126,11 @@ Target: `stg.operational_event_raw`
 
 | CSV column/context | Target column | Mapping | Required |
 |---|---|---|---:|
-| Generated | `staged_row_id` | Deterministic row identity | Yes |
+| Generated | `staged_row_id` | Database-generated staging row identity | Yes |
 | `event_id` | `event_id` | Preserve source text | Yes |
 | `customer_id` | `customer_id` | Preserve source text | Yes |
 | `event_type` | `event_type` | Preserve source text | Yes |
-| `event_timestamp` | `event_timestamp` | Preserve source text | Yes |
+| `event_timestamp` | `event_timestamp_raw` | Preserve source text | Yes |
 | `location_code` | `location_code` | Preserve source text/null | No |
 | `details` | `details` | Preserve source text/null | No |
 | File context | `source_file_name` | Exact base file name | Yes |
@@ -136,6 +140,7 @@ Target: `stg.operational_event_raw`
 | Constant | `source_system` | `OPS_CSV` | Yes |
 | `event_id` | `source_record_id` | Preserve original representation | Yes |
 | `event_timestamp` | `source_updated_at` | Parsed event timestamp when valid | No |
+| Canonical raw row | `record_checksum` | SHA-256 digest used for idempotent loading | Yes |
 | Ingestion clock | `ingested_at` | Current UTC timestamp | Yes |
 
 ## Operational staging to core
@@ -148,7 +153,7 @@ Target: `core.fact_operational_event`
 | `event_id` | `event_id` | Trim; deduplicate by greatest event timestamp | `TR-OPS-001`, `TR-OPS-003`, `DQ-OPS-001`, `DQ-COM-003` |
 | `customer_id` | `customer_id` | Trim and resolve against conformed customer | `TR-OPS-001`, `DQ-OPS-001`, `DQ-OPS-003` |
 | `event_type` | `event_type` | Trim and lowercase | `TR-OPS-001`, `TR-OPS-002`, `DQ-OPS-002` |
-| `event_timestamp` | `event_timestamp` | Parse and convert to UTC | `TR-COM-002`, `DQ-OPS-001` |
+| `event_timestamp_raw` | `event_timestamp` | Parse and convert to UTC | `TR-COM-002`, `DQ-OPS-001` |
 | `location_code` | `location_code` | Trim; blank or overlength value becomes null | `TR-OPS-001`, `DQ-OPS-004` |
 | `details` | `details` | Trim; blank becomes null | `TR-OPS-001` |
 | Winning staged record | `run_id` | Preserve execution lineage | `DQ-COM-004` |

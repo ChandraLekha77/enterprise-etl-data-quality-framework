@@ -109,6 +109,7 @@ Every staged row receives the following framework-owned fields:
 | `source_system` | One of the registered source IDs |
 | `source_record_id` | Original business key represented as text |
 | `source_updated_at` | Source change timestamp when available |
+| `record_checksum` | SHA-256 digest of the canonical raw record for idempotent loading |
 | `ingested_at` | UTC time at which the framework persisted the row |
 
 ## Schema-change policy

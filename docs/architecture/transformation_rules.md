@@ -79,6 +79,7 @@ A rule result records `rule_id`, severity, source system, business key, affected
 | `DQ-OPS-003` | Customer ID must exist in the current conformed customer set | `ERROR` |
 | `DQ-OPS-004` | Location code must not exceed 30 characters after trimming | `WARNING` and set location to null |
 | `DQ-OPS-005` | Duplicate file checksum must not be processed as a new batch | `ERROR` at batch level |
+| `DQ-OPS-006` | More than one source row for an event is reported after resolution | `WARNING` |
 
 ## Reconciliation rules
 

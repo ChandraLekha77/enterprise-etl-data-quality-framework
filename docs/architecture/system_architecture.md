@@ -62,7 +62,7 @@ REST Customer Status ---+          |                       |
 
 | Schema | Contents | Write owner |
 |---|---|---|
-| `control` | Pipeline runs, batches, checkpoints, and processing status | Python/Airflow |
+| `control` | Pipeline runs, stable source deliveries, per-run batch attempts, checkpoints, audit events, and processing status | Python/Airflow |
 | `stg` | Immutable-per-batch representations of source records plus ingestion metadata | Python ingestion |
 | `core` | Conformed customer, transaction, and operational models | dbt Core |
 | `quality` | Validation failures, reconciliation results, and recurring-issue summaries | Great Expectations, dbt, and Python reconciliation |

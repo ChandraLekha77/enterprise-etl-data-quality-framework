@@ -8,7 +8,7 @@
 - Framework identifiers use `UUID`.
 - Business keys retain their source text representation after trimming.
 - `run_id` identifies an execution; `batch_id` identifies a replayable source delivery.
-- The tables below are logical contracts. Physical DDL will be added during the database-schema delivery.
+- Day 4 control, staging, and quality definitions are maintained in `sql/postgresql/ddl`. Core tables remain logical contracts until their dbt-model delivery and must use these documented columns.
 
 ## `control.pipeline_run`
 
@@ -26,14 +26,26 @@ One row per framework execution.
 
 ## `control.source_batch`
 
-One row per source delivery included in a run.
+One stable row per independently replayable source delivery. Execution-specific state is recorded in `control.batch_run`, allowing the same `batch_id` to be reused safely on reruns.
 
 | Column | Type | Nullable | Description |
 |---|---|---:|---|
 | `batch_id` | `UUID` | No | Stable primary key for replay |
-| `run_id` | `UUID` | No | Current execution reference |
 | `source_system` | `VARCHAR(30)` | No | Registered source ID |
 | `delivery_key` | `TEXT` | No | Watermark, file identity, or API window identifying delivery |
+| `first_seen_at` | `TIMESTAMPTZ` | No | First registration time for the delivery |
+
+Unique contract: `(source_system, delivery_key)` identifies one source delivery.
+
+## `control.batch_run`
+
+One row per attempt to process a source delivery in a framework run.
+
+| Column | Type | Nullable | Description |
+|---|---|---:|---|
+| `batch_run_id` | `UUID` | No | Primary key for the processing attempt |
+| `batch_id` | `UUID` | No | Stable source-delivery reference |
+| `run_id` | `UUID` | No | Execution reference |
 | `status` | `VARCHAR(20)` | No | Same lifecycle vocabulary as the run where applicable |
 | `source_row_count` | `BIGINT` | Yes | Count observed at extraction |
 | `accepted_row_count` | `BIGINT` | Yes | Distinct valid records eligible for promotion |
@@ -41,8 +53,11 @@ One row per source delivery included in a run.
 | `duplicate_row_count` | `BIGINT` | Yes | Superseded duplicate records |
 | `started_at` | `TIMESTAMPTZ` | Yes | Batch processing start |
 | `finished_at` | `TIMESTAMPTZ` | Yes | Batch terminal-state time |
+| `error_message` | `TEXT` | Yes | Sanitized attempt-level technical error |
+| `created_at` | `TIMESTAMPTZ` | No | Attempt registration time |
+| `updated_at` | `TIMESTAMPTZ` | No | Most recent state change time |
 
-Unique contract: `(source_system, delivery_key)` identifies one source delivery.
+Unique contract: `(batch_id, run_id)` identifies one delivery attempt within one execution.
 
 ## Staging tables
 
@@ -52,7 +67,7 @@ Each staging table preserves source fields plus the common ingestion metadata de
 
 | Column | Type | Nullable | Description |
 |---|---|---:|---|
-| `staged_row_id` | `BIGINT` | No | Deterministic staging row identity |
+| `staged_row_id` | `BIGINT` | No | Database-generated staging row identity |
 | `customer_id` | `TEXT` | Yes | Raw CRM customer key |
 | `first_name` | `TEXT` | Yes | Raw first name |
 | `last_name` | `TEXT` | Yes | Raw last name |
@@ -60,13 +75,14 @@ Each staging table preserves source fields plus the common ingestion metadata de
 | `phone` | `TEXT` | Yes | Raw phone |
 | `country_code` | `TEXT` | Yes | Raw country value |
 | `status` | `TEXT` | Yes | Raw CRM status |
-| `created_at` | `TEXT` | Yes | Raw source timestamp representation |
-| `updated_at` | `TEXT` | Yes | Raw source timestamp representation |
+| `created_at_raw` | `TEXT` | Yes | Raw source timestamp representation |
+| `updated_at_raw` | `TEXT` | Yes | Raw source timestamp representation |
 | `run_id` | `UUID` | No | Execution lineage |
 | `batch_id` | `UUID` | No | Delivery lineage |
 | `source_system` | `VARCHAR(30)` | No | Always `CRM_PG` |
 | `source_record_id` | `TEXT` | Yes | Unmodified source key representation |
 | `source_updated_at` | `TIMESTAMPTZ` | Yes | Parsed source watermark when valid |
+| `record_checksum` | `CHAR(64)` | No | SHA-256 digest used for idempotent batch loading |
 | `ingested_at` | `TIMESTAMPTZ` | No | Staging insert time |
 
 ### `stg.transaction_raw`
@@ -79,7 +95,7 @@ Contains `staged_row_id`, raw operational-event contract fields, `source_file_na
 
 ### `stg.customer_status_raw`
 
-Contains `staged_row_id`, `customer_id`, `status`, `status_updated_at`, `page_token`, and all common ingestion metadata.
+Contains `staged_row_id`, `customer_id`, `status`, `status_updated_at_raw`, `page_token`, the original JSON in `raw_payload`, and all common ingestion metadata.
 
 ## `core.dim_customer`
 
