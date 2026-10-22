@@ -10,8 +10,8 @@ All timestamps are interpreted as UTC unless an explicit source offset is presen
 
 | Source ID | Business role | Interface | Authoritative data | Delivery key |
 |---|---|---|---|---|
-| `CRM_PG` | Customer master | PostgreSQL table `crm.customers` | Customer identity and base profile | Maximum `updated_at` included in extraction |
-| `BILLING_MSSQL` | Financial transactions | SQL Server table `dbo.transactions` | Transaction amount, currency, and settlement status | Maximum `updated_at` included in extraction |
+| `CRM_PG` | Customer master | PostgreSQL table `crm.customers` | Customer identity and base profile | UTC incremental window `(last successful watermark, batch cutoff]` |
+| `BILLING_MSSQL` | Financial transactions | SQL Server table `dbo.transactions` | Transaction amount, currency, and settlement status | UTC incremental window `(last successful watermark, batch cutoff]` |
 | `OPS_CSV` | Operational events | CSV file | Customer service and operational activity | File name plus file content checksum |
 | `STATUS_API` | Current customer status | REST endpoint returning JSON | Latest status and status-effective timestamp | Response retrieval timestamp plus request window |
 
@@ -32,6 +32,8 @@ Expected object: `crm.customers`
 | `updated_at` | Timestamp with offset | Yes | Incremental extraction watermark |
 
 Extraction selects records with `updated_at` greater than the last successful watermark and less than or equal to the current batch cutoff. Source rows are never updated by this framework.
+
+Database extraction is read-only and uses named bound parameters, explicit column projections, deterministic ordering by watermark and source row identifier, and bounded fetch partitions. Rows with a null required watermark are also extracted so the contract violation can be quarantined instead of silently disappearing. A window is identified by its UTC lower and upper bounds; the successful watermark advances only after downstream processing completes.
 
 ## `BILLING_MSSQL` transaction contract
 
