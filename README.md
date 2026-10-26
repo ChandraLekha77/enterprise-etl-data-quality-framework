@@ -61,3 +61,4 @@ Runtime settings are read from environment variables only. `AppSettings.from_env
 - Day 5: deterministic synthetic source fixtures and expected reconciliation outputs complete
 - Day 6: validated SQLAlchemy configuration, pooled connections, health checks, and tests complete
 - Day 7: incremental PostgreSQL and SQL Server source extractors complete
+- Day 8: transactional run, stable batch, processing-step, lifecycle, and masked audit tracking complete

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+docs/chandralekha_ssh_setup.txt
 
 # Python
 __pycache__/
