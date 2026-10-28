@@ -1,0 +1,14 @@
+name: enterprise_etl_quality
+version: 1.0.0
+config-version: 2
+profile: enterprise_etl_quality
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages"]
+models:
+  enterprise_etl_quality:
+    staging:
+      +materialized: view
+      +schema: dbt_staging
+    customers:
+      +schema: core

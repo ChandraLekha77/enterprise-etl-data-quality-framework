@@ -1,0 +1,28 @@
+version: 2
+models:
+  - name: stg_customers
+    columns:
+      - name: staged_row_id
+        tests: [not_null, unique]
+      - name: source_system
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['CRM_PG']
+  - name: stg_customer_statuses
+    columns:
+      - name: staged_row_id
+        tests: [not_null, unique]
+      - name: source_system
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['STATUS_API']
+  - name: stg_transactions
+    columns:
+      - name: staged_row_id
+        tests: [not_null, unique]
+  - name: stg_operational_events
+    columns:
+      - name: staged_row_id
+        tests: [not_null, unique]

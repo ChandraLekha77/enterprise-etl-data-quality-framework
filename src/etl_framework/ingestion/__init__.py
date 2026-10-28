@@ -20,6 +20,13 @@ from etl_framework.ingestion.staging_loaders import (
     load_crm_customers,
     load_operational_events,
 )
+from etl_framework.ingestion.customer_status_api import (
+    CustomerStatusApiError,
+    CustomerStatusApiSettings,
+    create_customer_status_session,
+    extract_customer_statuses,
+    load_customer_statuses,
+)
 
 __all__ = [
     "ExtractionWindow",
@@ -36,4 +43,9 @@ __all__ = [
     "load_crm_customers",
     "load_operational_events",
     "read_operational_csv",
+    "CustomerStatusApiError",
+    "CustomerStatusApiSettings",
+    "create_customer_status_session",
+    "extract_customer_statuses",
+    "load_customer_statuses",
 ]

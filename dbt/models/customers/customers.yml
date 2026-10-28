@@ -1,0 +1,40 @@
+version: 2
+models:
+  - name: int_customer_candidates
+    description: Latest CRM customer enriched by the newest eligible API status.
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+      - name: status_source
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['CRM_PG', 'STATUS_API']
+  - name: dim_customer
+    description: Promoted, valid current customer dimension.
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+      - name: first_name
+        tests: [not_null]
+      - name: last_name
+        tests: [not_null]
+      - name: email
+        tests: [not_null]
+      - name: country_code
+        tests: [not_null]
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['active', 'inactive', 'suspended']
+      - name: status_source
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['CRM_PG', 'STATUS_API']
+      - name: run_id
+        tests: [not_null]
+      - name: batch_id
+        tests: [not_null]

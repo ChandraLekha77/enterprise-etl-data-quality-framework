@@ -52,6 +52,20 @@ python -m venv .venv
 
 Runtime settings are read from environment variables only. `AppSettings.from_env()` validates required database endpoints, rejects placeholder secrets, builds encoded SQLAlchemy URLs, and keeps passwords out of object representations and connection errors.
 
+Install dbt separately, copy its example profile, and build the warehouse models:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r dbt\requirements.txt
+Copy-Item dbt\profiles.yml.example dbt\profiles.yml
+dbt build --project-dir dbt --profiles-dir dbt
+```
+
+The profile reads the existing `WAREHOUSE_POSTGRES_*` variables. REST status
+ingestion also requires `CUSTOMER_STATUS_API_URL` and
+`CUSTOMER_STATUS_API_TOKEN`; bounded timeout and retry settings are documented
+in `.env.example`. Credentials and pagination tokens must not be placed in the
+endpoint URL.
+
 ## Delivery status
 
 - Day 1: repository structure complete
@@ -64,3 +78,6 @@ Runtime settings are read from environment variables only. `AppSettings.from_env
 - Day 8: transactional run, stable batch, processing-step, lifecycle, and masked audit tracking complete
 - Day 9: replay-safe CRM and billing database-to-staging loading complete
 - Day 10: validated operational CSV registration and staging ingestion complete
+- Day 11: secure, paginated customer-status API ingestion and staging load complete
+- Day 12: dbt PostgreSQL profile, normalized staging models, safe conversions, and tests complete
+- Day 13: customer normalization, deduplication, status precedence, and promotion complete

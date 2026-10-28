@@ -1,0 +1,29 @@
+version: 2
+sources:
+  - name: warehouse_staging
+    schema: stg
+    tables:
+      - name: customer_raw
+        columns:
+          - name: staged_row_id
+            tests: [not_null, unique]
+          - name: record_checksum
+            tests: [not_null]
+      - name: customer_status_raw
+        columns:
+          - name: staged_row_id
+            tests: [not_null, unique]
+          - name: record_checksum
+            tests: [not_null]
+      - name: transaction_raw
+        columns:
+          - name: staged_row_id
+            tests: [not_null, unique]
+          - name: record_checksum
+            tests: [not_null]
+      - name: operational_event_raw
+        columns:
+          - name: staged_row_id
+            tests: [not_null, unique]
+          - name: record_checksum
+            tests: [not_null]

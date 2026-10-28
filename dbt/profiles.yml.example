@@ -1,0 +1,14 @@
+enterprise_etl_quality:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('WAREHOUSE_POSTGRES_HOST') }}"
+      port: "{{ env_var('WAREHOUSE_POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('WAREHOUSE_POSTGRES_USER') }}"
+      password: "{{ env_var('WAREHOUSE_POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('WAREHOUSE_POSTGRES_DB') }}"
+      schema: dbt
+      threads: "{{ env_var('DBT_THREADS', '4') | int }}"
+      connect_timeout: "{{ env_var('DB_CONNECT_TIMEOUT_SECONDS', '10') | int }}"
+      sslmode: "{{ env_var('WAREHOUSE_POSTGRES_SSL_MODE', 'require') }}"
