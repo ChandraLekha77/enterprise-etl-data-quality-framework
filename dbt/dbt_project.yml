@@ -12,3 +12,7 @@ models:
       +schema: dbt_staging
     customers:
       +schema: core
+    transactions:
+      +schema: core
+    operations:
+      +schema: core

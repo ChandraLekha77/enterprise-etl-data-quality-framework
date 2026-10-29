@@ -1,0 +1,36 @@
+{
+  "name": "transaction_quality",
+  "meta": {"source_system": "BILLING_MSSQL"},
+  "expectations": [
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {"column": "transaction_id"},
+      "meta": {"rule_id": "DQ-TXN-001", "severity": "ERROR", "message": "Transaction ID is required"}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {"column": "amount", "min_value": 0},
+      "meta": {"rule_id": "DQ-TXN-002", "severity": "ERROR", "message": "Transaction amount must be nonnegative"}
+    },
+    {
+      "type": "expect_column_values_to_match_regex",
+      "kwargs": {"column": "currency_code", "regex": "^[A-Z]{3}$"},
+      "meta": {"rule_id": "DQ-TXN-003", "severity": "ERROR", "message": "Currency code must contain three uppercase ASCII letters"}
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {"column": "transaction_status", "value_set": ["pending", "completed", "failed", "refunded"]},
+      "meta": {"rule_id": "DQ-TXN-004", "severity": "ERROR", "message": "Transaction status is not allowed"}
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {"column": "customer_resolved", "value_set": [true]},
+      "meta": {"rule_id": "DQ-TXN-005", "severity": "ERROR", "message": "Transaction customer does not resolve"}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {"column": "source_row_count", "max_value": 1},
+      "meta": {"rule_id": "DQ-TXN-006", "severity": "WARNING", "message": "Duplicate transaction rows were resolved"}
+    }
+  ]
+}

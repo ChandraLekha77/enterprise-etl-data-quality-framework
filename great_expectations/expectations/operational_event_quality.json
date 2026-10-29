@@ -1,0 +1,31 @@
+{
+  "name": "operational_event_quality",
+  "meta": {"source_system": "OPS_CSV"},
+  "expectations": [
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {"column": "event_id"},
+      "meta": {"rule_id": "DQ-OPS-001", "severity": "ERROR", "message": "Event ID is required"}
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {"column": "event_type", "value_set": ["service", "shipment", "support", "maintenance"]},
+      "meta": {"rule_id": "DQ-OPS-002", "severity": "ERROR", "message": "Operational event type is not allowed"}
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {"column": "customer_resolved", "value_set": [true]},
+      "meta": {"rule_id": "DQ-OPS-003", "severity": "ERROR", "message": "Operational event customer does not resolve"}
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {"column": "location_code_invalid", "value_set": [false]},
+      "meta": {"rule_id": "DQ-OPS-004", "severity": "WARNING", "message": "Location code exceeded thirty characters and was cleared"}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {"column": "source_row_count", "max_value": 1},
+      "meta": {"rule_id": "DQ-OPS-006", "severity": "WARNING", "message": "Duplicate operational event rows were resolved"}
+    }
+  ]
+}

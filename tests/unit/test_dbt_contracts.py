@@ -32,3 +32,17 @@ def test_customer_rules_include_dedup_precedence_and_incremental_promotion() -> 
     assert "STATUS_API" in candidates
     assert "incremental_strategy='merge'" in promotion
     assert "unique_key='customer_id'" in promotion
+
+
+def test_transaction_and_operational_fact_promotions_follow_documented_rules() -> None:
+    transactions = dbt_file("models/transactions/int_transaction_candidates.sql")
+    transaction_fact = dbt_file("models/transactions/fact_transaction.sql")
+    operations = dbt_file("models/operations/int_operational_event_candidates.sql")
+    operational_fact = dbt_file("models/operations/fact_operational_event.sql")
+
+    assert "order by updated_at desc nulls last, staged_row_id desc" in transactions
+    assert "customer_resolved" in transactions and "customer_resolved" in transaction_fact
+    assert "amount::numeric(18, 2)" in transaction_fact
+    assert "order by event_timestamp desc nulls last, staged_row_id desc" in operations
+    assert "location_code_invalid" in operations
+    assert "customer_resolved" in operations and "customer_resolved" in operational_fact

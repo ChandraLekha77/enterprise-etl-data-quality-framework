@@ -14,7 +14,8 @@
 {% macro safe_numeric(expression, precision=18, scale=2) -%}
     case
         when pg_input_is_valid(btrim({{ expression }}::text), 'numeric')
-          then round(btrim({{ expression }}::text)::numeric, {{ scale }})
+         and abs(btrim({{ expression }}::text)::numeric) < power(10::numeric, {{ precision - scale }})
+          then round(btrim({{ expression }}::text)::numeric, {{ scale }})::numeric({{ precision }}, {{ scale }})
         else null
     end
 {%- endmacro %}

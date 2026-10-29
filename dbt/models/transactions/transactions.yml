@@ -1,0 +1,34 @@
+version: 2
+models:
+  - name: int_transaction_candidates
+    description: Latest deterministic transaction version with customer resolution state.
+    columns:
+      - name: transaction_id
+        tests: [not_null, unique]
+      - name: source_row_count
+        tests: [not_null]
+  - name: fact_transaction
+    description: Valid transactions promoted to the conformed core fact table.
+    columns:
+      - name: transaction_id
+        tests: [not_null, unique]
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+      - name: amount
+        tests: [not_null]
+      - name: currency_code
+        tests: [not_null]
+      - name: transaction_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['pending', 'completed', 'failed', 'refunded']
+      - name: run_id
+        tests: [not_null]
+      - name: batch_id
+        tests: [not_null]

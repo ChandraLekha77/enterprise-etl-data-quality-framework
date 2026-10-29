@@ -1,0 +1,32 @@
+version: 2
+models:
+  - name: int_operational_event_candidates
+    description: Latest deterministic event version with customer resolution state.
+    columns:
+      - name: event_id
+        tests: [not_null, unique]
+      - name: source_row_count
+        tests: [not_null]
+  - name: fact_operational_event
+    description: Valid operational events promoted to the conformed core fact table.
+    columns:
+      - name: event_id
+        tests: [not_null, unique]
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['service', 'shipment', 'support', 'maintenance']
+      - name: event_timestamp
+        tests: [not_null]
+      - name: run_id
+        tests: [not_null]
+      - name: batch_id
+        tests: [not_null]

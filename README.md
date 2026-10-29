@@ -66,6 +66,14 @@ ingestion also requires `CUSTOMER_STATUS_API_URL` and
 in `.env.example`. Credentials and pagination tokens must not be placed in the
 endpoint URL.
 
+After installing runtime dependencies and setting
+`GX_WAREHOUSE_CONNECTION_STRING`, register the Great Expectations SQL assets,
+validation definitions, and checkpoint with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\configure_great_expectations.py
+```
+
 ## Delivery status
 
 - Day 1: repository structure complete
@@ -81,3 +89,5 @@ endpoint URL.
 - Day 11: secure, paginated customer-status API ingestion and staging load complete
 - Day 12: dbt PostgreSQL profile, normalized staging models, safe conversions, and tests complete
 - Day 13: customer normalization, deduplication, status precedence, and promotion complete
+- Day 14: transaction and operational candidate models and fact promotion complete
+- Day 15: Great Expectations rule mapping and safe idempotent validation storage complete
