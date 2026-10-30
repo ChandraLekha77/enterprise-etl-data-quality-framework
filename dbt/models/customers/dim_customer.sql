@@ -10,7 +10,10 @@ select
     status_source, source_created_at, source_updated_at, run_id, batch_id,
     current_timestamp as loaded_at
 from {{ ref('int_customer_candidates') }}
+inner join {{ source('warehouse_control', 'batch_run') }} approved_batch
+  using (run_id, batch_id)
 where customer_id is not null
+  and approved_batch.status = 'SUCCEEDED'
   and first_name is not null
   and last_name is not null
   and email is not null

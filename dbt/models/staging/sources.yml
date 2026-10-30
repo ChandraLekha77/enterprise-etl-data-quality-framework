@@ -1,5 +1,17 @@
 version: 2
 sources:
+  - name: warehouse_control
+    schema: control
+    tables:
+      - name: batch_run
+        columns:
+          - name: batch_run_id
+            tests: [not_null, unique]
+          - name: status
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['PENDING', 'RUNNING', 'QUARANTINED', 'FAILED', 'SUCCEEDED', 'CANCELLED']
   - name: warehouse_staging
     schema: stg
     tables:

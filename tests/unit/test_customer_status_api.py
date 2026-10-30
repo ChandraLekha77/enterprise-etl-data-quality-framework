@@ -89,6 +89,15 @@ def test_request_exception_is_sanitized() -> None:
     assert "top-secret" not in str(error.value)
 
 
+def test_unknown_nonblank_status_is_preserved_for_business_rule_quarantine() -> None:
+    client = MagicMock()
+    client.get.return_value = response(
+        {"data": [{"customer_id": "C1", "status": "archived", "status_updated_at": "2026-10-01T12:00:00Z"}], "next_page": None}
+    )
+    rows = extract_customer_statuses(settings(), window(), session=client)
+    assert rows[0]["status"] == "archived"
+
+
 def test_session_has_bounded_retry_policy_and_auth_header() -> None:
     session = create_customer_status_session(settings())
     try:

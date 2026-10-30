@@ -27,7 +27,6 @@ from etl_framework.ingestion.staging_loaders import StagingLoadError, StagingLoa
 
 LOGGER = logging.getLogger(__name__)
 REQUIRED_FIELDS = ("customer_id", "status", "status_updated_at")
-ALLOWED_STATUSES = frozenset({"active", "inactive", "suspended"})
 
 
 class CustomerStatusApiError(RuntimeError):
@@ -186,7 +185,7 @@ def _validate_page(payload: Any) -> tuple[list[dict[str, Any]], str | None]:
             raise CustomerStatusApiError(f"Customer-status API data item {index} is missing required fields: {', '.join(missing)}")
         if not isinstance(row["customer_id"], str) or not row["customer_id"].strip():
             raise CustomerStatusApiError(f"Customer-status API data item {index} has an invalid customer_id")
-        if not isinstance(row["status"], str) or row["status"].strip().lower() not in ALLOWED_STATUSES:
+        if not isinstance(row["status"], str) or not row["status"].strip():
             raise CustomerStatusApiError(f"Customer-status API data item {index} has an invalid status")
         _parse_timestamp(row["status_updated_at"], index)
         validated.append(dict(row))

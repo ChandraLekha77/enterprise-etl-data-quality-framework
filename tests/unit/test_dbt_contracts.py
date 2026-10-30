@@ -46,3 +46,5 @@ def test_transaction_and_operational_fact_promotions_follow_documented_rules() -
     assert "order by event_timestamp desc nulls last, staged_row_id desc" in operations
     assert "location_code_invalid" in operations
     assert "customer_resolved" in operations and "customer_resolved" in operational_fact
+    assert "approved_batch.status = 'SUCCEEDED'" in transaction_fact
+    assert "approved_batch.status = 'SUCCEEDED'" in operational_fact

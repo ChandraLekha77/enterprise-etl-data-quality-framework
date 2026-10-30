@@ -16,7 +16,10 @@ select
     batch_id,
     current_timestamp as loaded_at
 from {{ ref('int_operational_event_candidates') }}
+inner join {{ source('warehouse_control', 'batch_run') }} approved_batch
+  using (run_id, batch_id)
 where event_id is not null
+  and approved_batch.status = 'SUCCEEDED'
   and customer_id is not null
   and customer_resolved
   and event_timestamp is not null
