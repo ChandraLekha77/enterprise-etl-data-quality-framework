@@ -93,3 +93,5 @@ validation definitions, and checkpoint with:
 - Day 15: Great Expectations rule mapping and safe idempotent validation storage complete
 - Day 16: business-rule validation, record classification, and fixture comparison complete
 - Day 17: atomic quality gating, quarantine accounting, and corrected replay support complete
+- Day 18: row-count and key-set reconciliation with persisted differences complete
+- Day 19: exact financial reconciliation and transactional release gating complete

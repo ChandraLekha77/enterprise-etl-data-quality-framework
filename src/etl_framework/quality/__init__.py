@@ -22,6 +22,19 @@ from etl_framework.quality.quality_gate import (
     QualityGateResult,
     apply_quality_gate,
 )
+from etl_framework.quality.reconciliation import (
+    ReconciliationError,
+    ReconciliationResult,
+    persist_reconciliations,
+    reconcile_financial_totals,
+    reconcile_keys,
+    reconcile_row_counts,
+)
+from etl_framework.quality.release_gate import (
+    ReleaseGateError,
+    ReleaseGateResult,
+    apply_release_gate,
+)
 
 __all__ = [
     "Severity",
@@ -40,4 +53,13 @@ __all__ = [
     "QualityGateError",
     "QualityGateResult",
     "apply_quality_gate",
+    "ReconciliationError",
+    "ReconciliationResult",
+    "persist_reconciliations",
+    "reconcile_financial_totals",
+    "reconcile_keys",
+    "reconcile_row_counts",
+    "ReleaseGateError",
+    "ReleaseGateResult",
+    "apply_release_gate",
 ]

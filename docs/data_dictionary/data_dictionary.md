@@ -180,6 +180,7 @@ One row per evaluated rule outcome that must be reported. Successful record-leve
 | `difference` | `NUMERIC(28,4)` | No | `target_value - source_value` |
 | `tolerance` | `NUMERIC(28,4)` | No | Allowed absolute difference |
 | `status` | `VARCHAR(10)` | No | `PASS` or `FAIL` |
+| `details` | `JSONB` | No | Missing or unexpected keys and other safe comparison context |
 | `created_at` | `TIMESTAMPTZ` | No | Comparison time |
 
 ## `quality.issue_summary`

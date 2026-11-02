@@ -48,6 +48,7 @@ def test_quality_writes_are_idempotent_and_batch_counts_balance() -> None:
     assert "UQ_VALIDATION_FAILURE UNIQUE NULLS NOT DISTINCT" in ddl
     assert "UQ_RECONCILIATION_METRIC UNIQUE NULLS NOT DISTINCT" in ddl
     assert "SOURCE_ROW_COUNT = ACCEPTED_ROW_COUNT + QUARANTINED_ROW_COUNT + DUPLICATE_ROW_COUNT" in ddl
+    assert "ADD COLUMN IF NOT EXISTS DETAILS JSONB" in ddl
 
 
 def test_every_documented_rule_is_seeded() -> None:

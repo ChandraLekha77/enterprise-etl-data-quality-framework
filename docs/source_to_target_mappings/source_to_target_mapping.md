@@ -192,6 +192,7 @@ Target: `quality.reconciliation_result`
 | Calculated | `difference` | `target_value - source_value` |
 | Rule definition | `tolerance` | Allowed absolute difference |
 | Calculated | `status` | `PASS` when `abs(difference) <= tolerance`; otherwise `FAIL` |
+| Comparison context | `details` | Missing/unexpected keys or other safe diagnostic context; empty object when not needed |
 | Reconciliation clock | `created_at` | Current UTC timestamp |
 
 ## Batch accounting examples
