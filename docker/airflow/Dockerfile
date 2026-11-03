@@ -19,7 +19,9 @@ RUN apt-get update \
 USER airflow
 
 COPY --chown=airflow:root requirements.txt /opt/airflow/requirements.txt
+COPY --chown=airflow:root dbt/requirements.txt /opt/airflow/dbt-requirements.txt
 
 RUN pip install --no-cache-dir \
     "apache-airflow==3.3.1" \
-    --requirement /opt/airflow/requirements.txt
+    --requirement /opt/airflow/requirements.txt \
+    --requirement /opt/airflow/dbt-requirements.txt

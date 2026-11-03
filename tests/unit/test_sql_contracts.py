@@ -51,6 +51,14 @@ def test_quality_writes_are_idempotent_and_batch_counts_balance() -> None:
     assert "ADD COLUMN IF NOT EXISTS DETAILS JSONB" in ddl
 
 
+def test_delivery_lease_supports_conflict_prevention_and_recovery() -> None:
+    ddl = (DDL_DIRECTORY / "007_delivery_leases.sql").read_text(encoding="utf-8")
+    assert "CREATE TABLE IF NOT EXISTS control.delivery_lease" in ddl
+    assert "PRIMARY KEY (source_system, delivery_key)" in ddl
+    assert "owner_run_id UUID NOT NULL" in ddl
+    assert "expires_at TIMESTAMPTZ NOT NULL" in ddl
+
+
 def test_every_documented_rule_is_seeded() -> None:
     documentation = (ROOT / "docs/architecture/transformation_rules.md").read_text(
         encoding="utf-8"

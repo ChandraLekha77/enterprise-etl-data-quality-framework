@@ -94,6 +94,28 @@ Open `http://127.0.0.1:8080` and sign in with `AIRFLOW_ADMIN_USERNAME` and `AIRF
 
 ## Routine checks
 
+### Run and recover the enterprise pipeline
+
+Unpause and trigger the `enterprise_etl_data_quality` DAG from the Airflow UI,
+or use the Airflow CLI inside the scheduler container. The DAG runs the CRM,
+billing, operational CSV, and customer-status API ingestions, passes only
+run/batch identifiers through XCom, builds dbt candidate models, validates and
+promotes each source, reconciles released data, and publishes the final run
+status.
+
+Technical task failures use two bounded retries with exponential backoff.
+Persisted `QUARANTINED` quality outcomes are not raised as retryable task
+exceptions. Clear a failed task in the same DAG run to resume with the same
+identifiers. Staging loads replace their batch atomically, validation and
+reconciliation writes are idempotent, and a same-owner delivery lease is
+renewed. A different run cannot claim that delivery until its lease expires
+(`PIPELINE_DELIVERY_LEASE_SECONDS`, two hours by default).
+
+Watermarks are updated only by a successful transactional source release.
+Failed technical tasks and quarantined releases leave the prior source
+watermark intact. Correct the source data, then trigger or clear the run for a
+safe replay.
+
 Show container and health state:
 
 ```powershell

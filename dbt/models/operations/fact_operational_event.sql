@@ -2,7 +2,8 @@
     materialized='incremental',
     unique_key='event_id',
     incremental_strategy='merge',
-    on_schema_change='fail'
+    on_schema_change='fail',
+    post_hook="create unique index if not exists uq_fact_operational_event_event_id on {{ this }} (event_id)"
 ) }}
 
 select

@@ -95,3 +95,5 @@ validation definitions, and checkpoint with:
 - Day 17: atomic quality gating, quarantine accounting, and corrected replay support complete
 - Day 18: row-count and key-set reconciliation with persisted differences complete
 - Day 19: exact financial reconciliation and transactional release gating complete
+- Day 20: four-source Airflow ingestion, dbt candidates, validation, promotion, reconciliation, and status publication complete
+- Day 21: bounded technical retries, non-retryable quality failures, durable checkpoints, delivery leases, and replay recovery complete

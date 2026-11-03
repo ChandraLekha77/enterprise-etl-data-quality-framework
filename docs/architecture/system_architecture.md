@@ -89,6 +89,11 @@ Each execution receives a unique `run_id`. Each independently replayable source 
 - Invalid business records are written to quality results with rule, key, observed value, severity, and run metadata.
 - A batch is promoted only if all `ERROR`-severity validation rules and reconciliation tolerances pass.
 - Airflow retries technical failures. Data-quality failures are not blindly retried.
+- A renewable `(source_system, delivery_key)` lease rejects conflicting active
+  delivery owners. The same run may renew its lease, while an interrupted run
+  becomes recoverable after the bounded expiry.
+- XCom carries identifiers and compact counts only; extracted records remain in
+  PostgreSQL staging and are rebuilt atomically during replay.
 - Reruns remove or replace artifacts for the same `batch_id` inside the affected processing layer before rebuilding them.
 
 ## Security and privacy boundaries

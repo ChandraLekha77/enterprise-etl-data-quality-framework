@@ -32,6 +32,7 @@ def test_customer_rules_include_dedup_precedence_and_incremental_promotion() -> 
     assert "STATUS_API" in candidates
     assert "incremental_strategy='merge'" in promotion
     assert "unique_key='customer_id'" in promotion
+    assert "uq_dim_customer_customer_id" in promotion
 
 
 def test_transaction_and_operational_fact_promotions_follow_documented_rules() -> None:
@@ -48,3 +49,5 @@ def test_transaction_and_operational_fact_promotions_follow_documented_rules() -
     assert "customer_resolved" in operations and "customer_resolved" in operational_fact
     assert "approved_batch.status = 'SUCCEEDED'" in transaction_fact
     assert "approved_batch.status = 'SUCCEEDED'" in operational_fact
+    assert "uq_fact_transaction_transaction_id" in transaction_fact
+    assert "uq_fact_operational_event_event_id" in operational_fact

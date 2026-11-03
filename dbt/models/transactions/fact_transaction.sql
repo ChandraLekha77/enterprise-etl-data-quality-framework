@@ -2,7 +2,8 @@
     materialized='incremental',
     unique_key='transaction_id',
     incremental_strategy='merge',
-    on_schema_change='fail'
+    on_schema_change='fail',
+    post_hook="create unique index if not exists uq_fact_transaction_transaction_id on {{ this }} (transaction_id)"
 ) }}
 
 select

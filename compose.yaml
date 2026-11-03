@@ -46,6 +46,8 @@ x-airflow-common: &airflow-common
     - airflow_logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins:ro
     - ./config:/opt/airflow/project/config:ro
+    - ./data:/opt/airflow/project/data:ro
+    - ./dbt:/opt/airflow/project/dbt:ro
     - ./src:/opt/airflow/project/src:ro
   networks:
     - etl-backend
@@ -232,6 +234,18 @@ services:
       DB_POOL_TIMEOUT_SECONDS: ${DB_POOL_TIMEOUT_SECONDS:-30}
       DB_POOL_RECYCLE_SECONDS: ${DB_POOL_RECYCLE_SECONDS:-1800}
       DB_CONNECT_TIMEOUT_SECONDS: ${DB_CONNECT_TIMEOUT_SECONDS:-10}
+      CUSTOMER_STATUS_API_URL: ${CUSTOMER_STATUS_API_URL:?Set CUSTOMER_STATUS_API_URL}
+      CUSTOMER_STATUS_API_TOKEN: ${CUSTOMER_STATUS_API_TOKEN:?Set CUSTOMER_STATUS_API_TOKEN}
+      CUSTOMER_STATUS_API_CONNECT_TIMEOUT_SECONDS: ${CUSTOMER_STATUS_API_CONNECT_TIMEOUT_SECONDS:-5}
+      CUSTOMER_STATUS_API_READ_TIMEOUT_SECONDS: ${CUSTOMER_STATUS_API_READ_TIMEOUT_SECONDS:-30}
+      CUSTOMER_STATUS_API_MAX_RETRIES: ${CUSTOMER_STATUS_API_MAX_RETRIES:-3}
+      CUSTOMER_STATUS_API_BACKOFF_SECONDS: ${CUSTOMER_STATUS_API_BACKOFF_SECONDS:-0.5}
+      DBT_PROJECT_DIR: /opt/airflow/project/dbt
+      DBT_PROFILES_DIR: /opt/airflow/project/dbt
+      DBT_THREADS: ${DBT_THREADS:-4}
+      DBT_COMMAND_TIMEOUT_SECONDS: ${DBT_COMMAND_TIMEOUT_SECONDS:-1800}
+      OPS_CSV_DIRECTORY: /opt/airflow/project/data/raw/csv
+      PIPELINE_DELIVERY_LEASE_SECONDS: ${PIPELINE_DELIVERY_LEASE_SECONDS:-7200}
     command: scheduler
     healthcheck:
       interval: 15s

@@ -2,7 +2,8 @@
     materialized='incremental',
     unique_key='customer_id',
     incremental_strategy='merge',
-    on_schema_change='fail'
+    on_schema_change='fail',
+    post_hook="create unique index if not exists uq_dim_customer_customer_id on {{ this }} (customer_id)"
 ) }}
 
 select

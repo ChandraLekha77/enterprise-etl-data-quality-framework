@@ -37,6 +37,21 @@ One stable row per independently replayable source delivery. Execution-specific 
 
 Unique contract: `(source_system, delivery_key)` identifies one source delivery.
 
+## `control.delivery_lease`
+
+One renewable ownership record prevents two active runs from processing the
+same source delivery. A retry by the same run renews the lease; an interrupted
+run can be recovered after the bounded lease expires.
+
+| Column | Type | Nullable | Description |
+|---|---|---:|---|
+| `source_system` | `VARCHAR(30)` | No | Source system component of the primary key |
+| `delivery_key` | `TEXT` | No | Stable delivery component of the primary key |
+| `owner_run_id` | `UUID` | No | Pipeline run currently allowed to process the delivery |
+| `acquired_at` | `TIMESTAMPTZ` | No | Initial acquisition time for the current owner |
+| `heartbeat_at` | `TIMESTAMPTZ` | No | Most recent same-owner renewal time |
+| `expires_at` | `TIMESTAMPTZ` | No | Time after which an interrupted owner may be replaced |
+
 ## `control.batch_run`
 
 One row per attempt to process a source delivery in a framework run.
