@@ -208,7 +208,7 @@ One row per evaluated rule outcome that must be reported. Successful record-leve
 | `classification` | `VARCHAR(20)` | No | `NEW`, `RECURRING`, `PERSISTENT`, or `RESOLVED` |
 | `first_seen_at` | `TIMESTAMPTZ` | No | Earliest occurrence |
 | `last_seen_at` | `TIMESTAMPTZ` | No | Most recent occurrence |
-| `affected_run_count` | `INTEGER` | No | Number of successful runs with the issue |
+| `affected_run_count` | `INTEGER` | No | Number of evaluated runs containing the issue |
 | `current_failure_count` | `BIGINT` | No | Affected records in the latest evaluated run |
 | `updated_at` | `TIMESTAMPTZ` | No | Summary refresh time |
 

@@ -36,6 +36,7 @@ The Docker environment provides isolated services for:
 - PostgreSQL warehouse on `127.0.0.1:5432`
 - SQL Server billing source on `127.0.0.1:1433`
 - Airflow API and UI on `127.0.0.1:8080`
+- Read-only quality reporting API on `127.0.0.1:8000`
 - Internal PostgreSQL storage for Airflow metadata
 
 Copy `.env.example` to `.env`, replace every `CHANGE_ME` value, and follow the [local environment runbook](docs/runbooks/local_environment.md). The Compose configuration fails early when a required secret or account value is missing.
@@ -74,6 +75,13 @@ validation definitions, and checkpoint with:
 .\.venv\Scripts\python.exe scripts\configure_great_expectations.py
 ```
 
+The reporting API exposes OpenAPI documentation at
+`http://127.0.0.1:8000/docs`. Run summaries, batch totals, validation failure
+groups, reconciliation differences, exact currency totals, and recurring
+issues are available below `/api/v1`. Requests are paginated with `page` and
+`page_size` (maximum 100), and database work is forced into read-only
+transactions.
+
 ## Delivery status
 
 - Day 1: repository structure complete
@@ -97,3 +105,5 @@ validation definitions, and checkpoint with:
 - Day 19: exact financial reconciliation and transactional release gating complete
 - Day 20: four-source Airflow ingestion, dbt candidates, validation, promotion, reconciliation, and status publication complete
 - Day 21: bounded technical retries, non-retryable quality failures, durable checkpoints, delivery leases, and replay recovery complete
+- Day 22: verified run, batch, failure, reconciliation, financial, and recurring-issue reports complete
+- Day 23: read-only FastAPI health and reporting endpoints with filters, pagination, and sanitized errors complete

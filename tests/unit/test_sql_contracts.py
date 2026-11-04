@@ -59,6 +59,13 @@ def test_delivery_lease_supports_conflict_prevention_and_recovery() -> None:
     assert "expires_at TIMESTAMPTZ NOT NULL" in ddl
 
 
+def test_reporting_indexes_cover_public_filters() -> None:
+    ddl = (DDL_DIRECTORY / "008_reporting_indexes.sql").read_text(encoding="utf-8")
+    assert "ix_batch_run_reporting" in ddl
+    assert "ix_validation_result_reporting" in ddl
+    assert "ix_reconciliation_result_reporting" in ddl
+
+
 def test_every_documented_rule_is_seeded() -> None:
     documentation = (ROOT / "docs/architecture/transformation_rules.md").read_text(
         encoding="utf-8"

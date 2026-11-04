@@ -43,6 +43,7 @@ from etl_framework.quality import (
     validate_operational_events,
     validate_transactions,
 )
+from etl_framework.reporting import refresh_recurring_issue_summaries
 
 
 SOURCE_ORDER = ("CRM_PG", "STATUS_API", "BILLING_MSSQL", "OPS_CSV")
@@ -281,6 +282,8 @@ def finalize_run(run_payload: Mapping[str, str]) -> str:
         else:
             status = "FAILED"
             message = "Pipeline batches ended in an unexpected state"
+        if status in {"SUCCEEDED", "QUARANTINED"}:
+            refresh_recurring_issue_summaries(warehouse, run_id)
         publish_pipeline_status(warehouse, run_id, status, error_message=message)
         RunTracker(warehouse).record_audit_event(
             "PIPELINE_FINISHED",

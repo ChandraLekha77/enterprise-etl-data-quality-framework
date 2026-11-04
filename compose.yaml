@@ -91,6 +91,48 @@ services:
     networks:
       - etl-backend
 
+  reporting-api:
+    <<: *service-security
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:-python:3.12.12-slim-bookworm}
+    image: ${REPORTING_API_IMAGE:-enterprise-etl-quality-api:1.0.0}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    depends_on:
+      warehouse-postgres:
+        condition: service_healthy
+    environment:
+      WAREHOUSE_POSTGRES_USER: ${WAREHOUSE_POSTGRES_USER:?Set WAREHOUSE_POSTGRES_USER}
+      WAREHOUSE_POSTGRES_PASSWORD: ${WAREHOUSE_POSTGRES_PASSWORD:?Set WAREHOUSE_POSTGRES_PASSWORD}
+      WAREHOUSE_POSTGRES_HOST: ${WAREHOUSE_POSTGRES_HOST:-warehouse-postgres}
+      WAREHOUSE_POSTGRES_PORT: ${WAREHOUSE_POSTGRES_PORT:-5432}
+      WAREHOUSE_POSTGRES_DB: ${WAREHOUSE_POSTGRES_DB:?Set WAREHOUSE_POSTGRES_DB}
+      WAREHOUSE_POSTGRES_SSL_MODE: ${WAREHOUSE_POSTGRES_SSL_MODE:-disable}
+      DB_POOL_SIZE: ${REPORTING_DB_POOL_SIZE:-5}
+      DB_MAX_OVERFLOW: ${REPORTING_DB_MAX_OVERFLOW:-5}
+      DB_POOL_TIMEOUT_SECONDS: ${DB_POOL_TIMEOUT_SECONDS:-30}
+      DB_POOL_RECYCLE_SECONDS: ${DB_POOL_RECYCLE_SECONDS:-1800}
+      DB_CONNECT_TIMEOUT_SECONDS: ${DB_CONNECT_TIMEOUT_SECONDS:-10}
+    ports:
+      - "127.0.0.1:${REPORTING_API_PORT:-8000}:8000"
+    healthcheck:
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"
+    networks:
+      - etl-backend
+
   airflow-postgres:
     <<: *service-security
     image: ${POSTGRES_IMAGE:-postgres:16.15-bookworm}

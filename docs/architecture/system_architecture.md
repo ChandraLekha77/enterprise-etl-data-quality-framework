@@ -68,6 +68,9 @@ REST Customer Status ---+          |                       |
 | `quality` | Validation failures, reconciliation results, and recurring-issue summaries | Great Expectations, dbt, and Python reconciliation |
 
 Services must write only to their owned schema. FastAPI is read-only across `control` and `quality`.
+The reporting repository issues `SET TRANSACTION READ ONLY` before every
+health or report query. Its public schemas exclude observed values,
+reconciliation key details, internal database messages, and credentials.
 
 ## Run lifecycle
 

@@ -10,6 +10,7 @@ This runbook starts the project infrastructure for development and integration t
 |---|---|---|---|
 | `crm-postgres` | PostgreSQL CRM source | `127.0.0.1:5433` | `crm_postgres_data` |
 | `warehouse-postgres` | PostgreSQL staging, core, control, and quality data | `127.0.0.1:5432` | `warehouse_postgres_data` |
+| `reporting-api` | Read-only pipeline and data-quality reports | `127.0.0.1:8000` | None |
 | `airflow-postgres` | Airflow metadata only | Internal network only | `airflow_postgres_data` |
 | `billing-sqlserver` | SQL Server billing source | `127.0.0.1:1433` | `sqlserver_data` |
 | `billing-sqlserver-init` | Idempotent billing schema, read-only login, and sample-data initialization | None | Uses SQL Server data store |
@@ -26,7 +27,7 @@ Airflow uses `LocalExecutor`. This avoids adding a Redis or message-broker depen
 - Linux-container support
 - At least 8 GB of memory allocated to Docker because SQL Server and Airflow run together
 - Python available for generating secure values
-- Ports 5432, 5433, 1433, and 8080 available on localhost, or alternate values configured in `.env`
+- Ports 5432, 5433, 1433, 8000, and 8080 available on localhost, or alternate values configured in `.env`
 
 ## First-time configuration
 
@@ -65,10 +66,10 @@ The command must exit successfully. A missing required value produces an error b
 
 ## Build and initialize
 
-Build the project Airflow image:
+Build the project Airflow and reporting API images:
 
 ```powershell
-docker compose build airflow-init
+docker compose build airflow-init reporting-api
 ```
 
 The first PostgreSQL startup applies the CRM source and warehouse DDL automatically, including the central documented-rule registry. SQL Server is initialized by `billing-sqlserver-init` after its health check passes.
@@ -91,6 +92,9 @@ docker compose ps
 Wait until PostgreSQL, SQL Server, the Airflow API server, and the Airflow scheduler report healthy. `billing-sqlserver-init` and `airflow-init` should show a successful exit. The DAG processor does not expose a separate port and is considered ready when its container remains running without restart loops.
 
 Open `http://127.0.0.1:8080` and sign in with `AIRFLOW_ADMIN_USERNAME` and `AIRFLOW_ADMIN_PASSWORD` from the local `.env` file.
+Open `http://127.0.0.1:8000/docs` for the reporting API contract. The API has
+no mutation routes, runs every query in a PostgreSQL read-only transaction,
+and binds only to loopback in the local environment.
 
 ## Routine checks
 
@@ -115,6 +119,21 @@ Watermarks are updated only by a successful transactional source release.
 Failed technical tasks and quarantined releases leave the prior source
 watermark intact. Correct the source data, then trigger or clear the run for a
 safe replay.
+
+### Verify reporting endpoints
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/runs?page=1&page_size=20'
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/validation-failures?severity=ERROR'
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/reconciliations?status=FAIL'
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/recurring-issues?classification=RECURRING'
+```
+
+Validation responses intentionally exclude business keys, observed values, and
+raw details. Reconciliation responses exclude key-detail blobs. Exact decimal
+financial totals are serialized as strings so currency values are not
+converted through binary floating point.
 
 Show container and health state:
 
