@@ -4,21 +4,12 @@ FROM ${AIRFLOW_BASE_IMAGE}
 USER root
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates curl \
-    && curl --fail --show-error --silent --location \
-        --output /tmp/packages-microsoft-prod.deb \
-        https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb \
-    && dpkg --install /tmp/packages-microsoft-prod.deb \
-    && rm /tmp/packages-microsoft-prod.deb \
-    && apt-get update \
     && ACCEPT_EULA=Y apt-get install --yes --no-install-recommends msodbcsql18 \
-    && apt-get purge --yes curl \
-    && apt-get autoremove --yes \
     && rm -rf /var/lib/apt/lists/*
 
 USER airflow
 
-COPY --chown=airflow:root requirements.txt /opt/airflow/requirements.txt
+COPY --chown=airflow:root docker/airflow/requirements.txt /opt/airflow/requirements.txt
 COPY --chown=airflow:root dbt/requirements.txt /opt/airflow/dbt-requirements.txt
 
 RUN pip install --no-cache-dir \

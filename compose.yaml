@@ -133,6 +133,46 @@ services:
     networks:
       - etl-backend
 
+  customer-status-mock:
+    <<: *service-security
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:-python:3.12.12-slim-bookworm}
+    image: ${REPORTING_API_IMAGE:-enterprise-etl-quality-api:1.0.0}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    environment:
+      CUSTOMER_STATUS_API_TOKEN: ${CUSTOMER_STATUS_API_TOKEN:?Set CUSTOMER_STATUS_API_TOKEN}
+      CUSTOMER_STATUS_FIXTURE_PATH: /app/data/raw/json/customer_status_acceptance.json
+    volumes:
+      - ./data/raw/json:/app/data/raw/json:ro
+    command:
+      - uvicorn
+      - api.mock_customer_status:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+      - --no-access-log
+    ports:
+      - "127.0.0.1:${CUSTOMER_STATUS_MOCK_PORT:-8001}:8001"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=3)"
+    networks:
+      - etl-backend
+
   airflow-postgres:
     <<: *service-security
     image: ${POSTGRES_IMAGE:-postgres:16.15-bookworm}
@@ -249,6 +289,8 @@ services:
         condition: service_healthy
       warehouse-postgres:
         condition: service_healthy
+      customer-status-mock:
+        condition: service_healthy
     environment:
       <<: *airflow-environment
       CRM_POSTGRES_USER: ${CRM_POSTGRES_USER:?Set CRM_POSTGRES_USER}
@@ -276,7 +318,7 @@ services:
       DB_POOL_TIMEOUT_SECONDS: ${DB_POOL_TIMEOUT_SECONDS:-30}
       DB_POOL_RECYCLE_SECONDS: ${DB_POOL_RECYCLE_SECONDS:-1800}
       DB_CONNECT_TIMEOUT_SECONDS: ${DB_CONNECT_TIMEOUT_SECONDS:-10}
-      CUSTOMER_STATUS_API_URL: ${CUSTOMER_STATUS_API_URL:?Set CUSTOMER_STATUS_API_URL}
+      CUSTOMER_STATUS_API_URL: ${CUSTOMER_STATUS_API_URL:-http://customer-status-mock:8001/v1/customer-status}
       CUSTOMER_STATUS_API_TOKEN: ${CUSTOMER_STATUS_API_TOKEN:?Set CUSTOMER_STATUS_API_TOKEN}
       CUSTOMER_STATUS_API_CONNECT_TIMEOUT_SECONDS: ${CUSTOMER_STATUS_API_CONNECT_TIMEOUT_SECONDS:-5}
       CUSTOMER_STATUS_API_READ_TIMEOUT_SECONDS: ${CUSTOMER_STATUS_API_READ_TIMEOUT_SECONDS:-30}

@@ -137,13 +137,13 @@ SELECT_PIPELINE_STATUS = text(
 UPDATE_PIPELINE_STATUS = text(
     """
     UPDATE control.pipeline_run
-    SET status = :new_status,
+    SET status = CAST(:new_status AS VARCHAR),
         started_at = CASE
-            WHEN :new_status = 'RUNNING' THEN COALESCE(started_at, CURRENT_TIMESTAMP)
+            WHEN CAST(:new_status AS VARCHAR) = 'RUNNING' THEN COALESCE(started_at, CURRENT_TIMESTAMP)
             ELSE started_at
         END,
         finished_at = CASE
-            WHEN :new_status IN ('QUARANTINED', 'FAILED', 'SUCCEEDED', 'CANCELLED')
+            WHEN CAST(:new_status AS VARCHAR) IN ('QUARANTINED', 'FAILED', 'SUCCEEDED', 'CANCELLED')
                 THEN CURRENT_TIMESTAMP
             ELSE NULL
         END,
@@ -166,17 +166,17 @@ SELECT_BATCH_RUN = text(
 UPDATE_BATCH_STATUS = text(
     """
     UPDATE control.batch_run
-    SET status = :new_status,
+    SET status = CAST(:new_status AS VARCHAR),
         source_row_count = COALESCE(:source_row_count, source_row_count),
         accepted_row_count = COALESCE(:accepted_row_count, accepted_row_count),
         quarantined_row_count = COALESCE(:quarantined_row_count, quarantined_row_count),
         duplicate_row_count = COALESCE(:duplicate_row_count, duplicate_row_count),
         started_at = CASE
-            WHEN :new_status = 'RUNNING' THEN COALESCE(started_at, CURRENT_TIMESTAMP)
+            WHEN CAST(:new_status AS VARCHAR) = 'RUNNING' THEN COALESCE(started_at, CURRENT_TIMESTAMP)
             ELSE started_at
         END,
         finished_at = CASE
-            WHEN :new_status IN ('QUARANTINED', 'FAILED', 'SUCCEEDED', 'CANCELLED')
+            WHEN CAST(:new_status AS VARCHAR) IN ('QUARANTINED', 'FAILED', 'SUCCEEDED', 'CANCELLED')
                 THEN CURRENT_TIMESTAMP
             ELSE NULL
         END,
@@ -204,13 +204,13 @@ SELECT_STEP_STATUS = text(
 UPDATE_STEP_STATUS = text(
     """
     UPDATE control.processing_step
-    SET status = :new_status,
+    SET status = CAST(:new_status AS VARCHAR),
         started_at = CASE
-            WHEN :new_status = 'RUNNING' THEN COALESCE(started_at, CURRENT_TIMESTAMP)
+            WHEN CAST(:new_status AS VARCHAR) = 'RUNNING' THEN COALESCE(started_at, CURRENT_TIMESTAMP)
             ELSE started_at
         END,
         finished_at = CASE
-            WHEN :new_status IN ('FAILED', 'SKIPPED', 'SUCCEEDED')
+            WHEN CAST(:new_status AS VARCHAR) IN ('FAILED', 'SKIPPED', 'SUCCEEDED')
                 THEN CURRENT_TIMESTAMP
             ELSE NULL
         END,

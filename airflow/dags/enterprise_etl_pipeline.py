@@ -46,7 +46,9 @@ def enterprise_etl_data_quality():
     @task
     def ingest(source_system: str, run_payload: dict[str, str]) -> dict:
         context = get_current_context()
-        upper = context["data_interval_end"].isoformat()
+        dag_run = context.get("dag_run")
+        configured_upper = (dag_run.conf or {}).get("upper_watermark") if dag_run else None
+        upper = configured_upper or context["data_interval_end"].isoformat()
         return ingest_source(
             source_system,
             run_payload,

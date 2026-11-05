@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir --requirement /app/requirements.txt
 
 COPY --chown=api:api src /app/src
 COPY --chown=api:api api /app/api
+COPY --chown=api:api data/raw/json /app/data/raw/json
 
 USER api
 

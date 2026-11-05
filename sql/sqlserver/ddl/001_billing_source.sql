@@ -18,7 +18,7 @@ END
 ELSE
 BEGIN
     SET @login_sql = N'ALTER LOGIN ' + QUOTENAME(@login_name)
-        + N' WITH PASSWORD = ' + QUOTENAME(@login_password, '''');';
+        + N' WITH PASSWORD = ' + QUOTENAME(@login_password, '''') + N';';
     EXEC sys.sp_executesql @login_sql;
 END;
 GO
