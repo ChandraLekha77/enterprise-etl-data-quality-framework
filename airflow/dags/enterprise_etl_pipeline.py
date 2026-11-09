@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from airflow.exceptions import AirflowFailException
 from airflow.sdk import dag, get_current_context, task
-from airflow.utils.trigger_rule import TriggerRule
+from airflow.sdk.exceptions import AirflowFailException
+from airflow.task.trigger_rule import TriggerRule
 
 from etl_framework.orchestration.airflow_tasks import (
     finalize_run,

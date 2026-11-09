@@ -161,15 +161,22 @@ def run_dbt_candidates(
                 "dim_customer fact_transaction fact_operational_event",
                 "--quiet",
             ]
+            dbt_environment = os.environ.copy()
+            # The project is mounted read-only in Airflow. Keep generated dbt
+            # artifacts in the container's writable, ephemeral filesystem.
+            dbt_environment.setdefault("DBT_TARGET_PATH", "/tmp/dbt-target")
+            dbt_environment.setdefault("DBT_LOG_PATH", "/tmp/dbt-logs")
             try:
-                # The empty build creates all core relations on a new warehouse
-                # without publishing data from a PENDING batch.
+                # Create empty core relations before candidate models resolve
+                # customer foreign keys. Source and ref relations are kept in
+                # named CTEs so dbt's --empty relation rewriting stays valid.
                 subprocess.run(
                     bootstrap,
                     check=True,
                     capture_output=True,
                     text=True,
                     timeout=_dbt_timeout(),
+                    env=dbt_environment,
                 )
                 subprocess.run(
                     command,
@@ -177,6 +184,7 @@ def run_dbt_candidates(
                     capture_output=True,
                     text=True,
                     timeout=_dbt_timeout(),
+                    env=dbt_environment,
                 )
             except (OSError, subprocess.SubprocessError) as exc:
                 raise RuntimeError("dbt candidate transformation failed") from exc
@@ -263,7 +271,8 @@ def finalize_run(run_payload: Mapping[str, str]) -> str:
         warehouse = engines["warehouse"]
         with warehouse.connect() as connection:
             statuses = list(connection.execute(text(
-                "SELECT source_system, status FROM control.batch_run "
+                "SELECT source_system, delivery_key, batch_run_id, status "
+                "FROM control.batch_run "
                 "JOIN control.source_batch USING (batch_id) WHERE run_id = :run_id"
             ), {"run_id": run_id}).mappings())
         by_source = {str(row["source_system"]): str(row["status"]) for row in statuses}
@@ -282,6 +291,20 @@ def finalize_run(run_payload: Mapping[str, str]) -> str:
         else:
             status = "FAILED"
             message = "Pipeline batches ended in an unexpected state"
+        if status == "FAILED":
+            # A terminal technical failure must not strand delivery ownership.
+            # Mark incomplete attempts and release only leases owned by this run
+            # so a corrected or interrupted delivery can be replayed safely.
+            tracker = RunTracker(warehouse)
+            for row in statuses:
+                if str(row["status"]) in {"PENDING", "RUNNING"}:
+                    _mark_batch_failed(tracker, UUID(str(row["batch_run_id"])))
+                release_delivery_lease(
+                    warehouse,
+                    source_system=str(row["source_system"]),
+                    delivery_key=str(row["delivery_key"]),
+                    owner_run_id=run_id,
+                )
         if status in {"SUCCEEDED", "QUARANTINED"}:
             refresh_recurring_issue_summaries(warehouse, run_id)
         publish_pipeline_status(warehouse, run_id, status, error_message=message)

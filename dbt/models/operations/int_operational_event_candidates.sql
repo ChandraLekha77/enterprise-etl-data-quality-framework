@@ -1,4 +1,7 @@
-with ranked as (
+with customers as (
+    select customer_id from {{ ref('dim_customer') }}
+),
+ranked as (
     select
         event_id, customer_id, event_type, event_timestamp,
         case when length(location_code) <= 30 then location_code else null end as location_code,
@@ -25,6 +28,6 @@ select
     ranked.source_row_count,
     customer.customer_id is not null as customer_resolved
 from ranked
-left join {{ ref('dim_customer') }} customer
+left join customers customer
   on customer.customer_id = ranked.customer_id
 where ranked.row_number = 1

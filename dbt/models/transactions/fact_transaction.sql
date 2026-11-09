@@ -6,6 +6,12 @@
     post_hook="create unique index if not exists uq_fact_transaction_transaction_id on {{ this }} (transaction_id)"
 ) }}
 
+with approved_batch as (
+    select * from {{ source('warehouse_control', 'batch_run') }}
+),
+transaction_candidates as (
+    select * from {{ ref('int_transaction_candidates') }}
+)
 select
     transaction_id,
     customer_id,
@@ -18,8 +24,8 @@ select
     run_id,
     batch_id,
     current_timestamp as loaded_at
-from {{ ref('int_transaction_candidates') }}
-inner join {{ source('warehouse_control', 'batch_run') }} approved_batch
+from transaction_candidates
+inner join approved_batch
   using (run_id, batch_id)
 where transaction_id is not null
   and approved_batch.status = 'SUCCEEDED'
