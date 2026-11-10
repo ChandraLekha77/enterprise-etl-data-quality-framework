@@ -87,13 +87,14 @@ UPSERT_VALIDATION_RESULT = text(
         message, details
     )
     SELECT
-        :validation_result_id, :run_id, :batch_id, :source_system, :rule_id,
-        :severity, :business_key, :field_name, :observed_value_masked,
+        :validation_result_id, :run_id, :batch_id, :source_system,
+        CAST(:rule_id AS VARCHAR(30)), CAST(:severity AS VARCHAR(10)),
+        :business_key, :field_name, :observed_value_masked,
         :message, CAST(:details AS JSONB)
     FROM quality.rule_definition rule
-    WHERE rule.rule_id = :rule_id
+    WHERE rule.rule_id = CAST(:rule_id AS VARCHAR(30))
       AND rule.rule_type = 'VALIDATION'
-      AND rule.severity = :severity
+      AND rule.severity = CAST(:severity AS VARCHAR(10))
       AND rule.enabled
     ON CONFLICT (run_id, batch_id, source_system, rule_id, business_key, field_name)
     DO UPDATE SET

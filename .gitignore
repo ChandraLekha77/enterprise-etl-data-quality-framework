@@ -8,6 +8,7 @@ docs/chandralekha_ssh_setup.txt
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest_runtime_tmp/
 .coverage
 htmlcov/
 .venv/
