@@ -55,6 +55,8 @@ def test_delivery_lease_supports_conflict_prevention_and_recovery() -> None:
     ddl = (DDL_DIRECTORY / "007_delivery_leases.sql").read_text(encoding="utf-8")
     assert "CREATE TABLE IF NOT EXISTS control.delivery_lease" in ddl
     assert "PRIMARY KEY (source_system, delivery_key)" in ddl
+    assert "owner_run_id UUID NOT NULL" in ddl
+    assert "expires_at TIMESTAMPTZ NOT NULL" in ddl
 
 
 def test_validation_upsert_casts_reused_registry_parameters() -> None:
@@ -63,8 +65,6 @@ def test_validation_upsert_casts_reused_registry_parameters() -> None:
     statement = str(UPSERT_VALIDATION_RESULT)
     assert statement.count("CAST(:rule_id AS VARCHAR(30))") == 2
     assert statement.count("CAST(:severity AS VARCHAR(10))") == 2
-    assert "owner_run_id UUID NOT NULL" in ddl
-    assert "expires_at TIMESTAMPTZ NOT NULL" in ddl
 
 
 def test_reporting_indexes_cover_public_filters() -> None:

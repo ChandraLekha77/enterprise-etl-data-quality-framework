@@ -84,11 +84,14 @@ UPSERT_RECONCILIATION = text(
         group_key, source_value, target_value, tolerance, status, details
     )
     SELECT
-        :reconciliation_result_id, :run_id, :batch_id, :rule_id, :metric_name,
-        :group_key, :source_value, :target_value, :tolerance, :status,
+        CAST(:reconciliation_result_id AS UUID), CAST(:run_id AS UUID),
+        CAST(:batch_id AS UUID), CAST(:rule_id AS VARCHAR(30)),
+        CAST(:metric_name AS VARCHAR(100)), CAST(:group_key AS VARCHAR(100)),
+        CAST(:source_value AS NUMERIC(20, 4)), CAST(:target_value AS NUMERIC(20, 4)),
+        CAST(:tolerance AS NUMERIC(20, 4)), CAST(:status AS VARCHAR(10)),
         CAST(:details AS JSONB)
     FROM quality.rule_definition rule
-    WHERE rule.rule_id = :rule_id
+    WHERE rule.rule_id = CAST(:rule_id AS VARCHAR(30))
       AND rule.rule_type = 'RECONCILIATION'
       AND rule.enabled
     ON CONFLICT (run_id, batch_id, rule_id, metric_name, group_key)
