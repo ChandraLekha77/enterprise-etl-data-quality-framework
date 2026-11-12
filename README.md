@@ -107,3 +107,31 @@ transactions.
 - Day 21: bounded technical retries, non-retryable quality failures, durable checkpoints, delivery leases, and replay recovery complete
 - Day 22: verified run, batch, failure, reconciliation, financial, and recurring-issue reports complete
 - Day 23: read-only FastAPI health and reporting endpoints with filters, pagination, and sanitized errors complete
+- Day 24: Docker service health, live source connectivity, warehouse loading, dbt, and validation tooling complete
+- Day 25: valid and mixed-quality acceptance fixtures and end-to-end execution workflow complete; fresh live rerun requires Docker
+- Day 26: failure, replay, rollback, watermark, and duplicate-prevention coverage complete; live outage/performance rerun requires Docker
+- Day 27: installation, operation, quarantine, replay, API, limits, and final verification documentation complete; host suite verified
+
+## Final verification
+
+The final acceptance matrix is intentionally split into a fast host suite and a
+Docker-backed live suite. Run it from a clean checkout as follows:
+
+```powershell
+Copy-Item .env.example .env
+# Replace every CHANGE_ME value before continuing.
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -q tests/unit
+docker compose up -d
+docker compose ps
+```
+
+After every required service is healthy, run the database integration tests,
+`dbt build`, and the valid and mixed-quality Airflow deliveries using the
+commands in the [local environment runbook](docs/runbooks/local_environment.md).
+The successful demonstration must show a `SUCCEEDED` valid run, quarantined
+mandatory-error records in the mixed delivery, persisted reconciliation
+differences for a deliberately failing comparison, and a corrected replay that
+does not duplicate core or quality results and advances watermarks only after
+success.

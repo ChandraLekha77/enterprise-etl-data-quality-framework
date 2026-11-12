@@ -180,6 +180,38 @@ $env:MSSQL_PORT = $env:MSSQL_HOST_PORT
 
 The host-side port variables are intentionally separate from the fixed container ports used by Airflow.
 
+## Final acceptance matrix
+
+Use this compact matrix for Day 27 sign-off:
+
+```powershell
+# Unit and in-process API tests
+.\.venv\Scripts\python.exe -m pytest -q tests/unit
+
+# Live PostgreSQL and SQL Server tests (after loading .env as shown above)
+.\.venv\Scripts\python.exe -m pytest -q -m integration
+
+# Warehouse models and tests
+docker compose exec airflow-scheduler dbt build `
+  --project-dir /opt/airflow/project/dbt `
+  --profiles-dir /opt/airflow/project/dbt
+```
+
+For the acceptance demonstration, trigger `enterprise_etl_data_quality` once
+with the valid four-source fixtures and once with the mixed-quality fixtures.
+For the valid run, verify `SUCCEEDED`, four source batches, non-null `run_id` and
+`batch_id` lineage, passing reconciliation rows, and matching reporting API
+totals. For the mixed run, verify mandatory errors are quarantined, warning-only
+rows remain eligible, core tables are unchanged by rejected records, and the
+reporting API returns masked failures. Correct the fixtures and replay the same
+delivery to demonstrate idempotent quality writes, no duplicate core rows, and
+watermark advancement only after successful promotion.
+
+Verification snapshot (2026-11-12): the host unit/API suite completed with
+154 passing tests. The previously completed dbt build contained 72 passing
+models/tests. Docker-dependent checks require Docker Desktop to be running; do
+not record a fresh live sign-off when the Docker engine is unavailable.
+
 ## Stop and restart
 
 Stop containers while preserving all database and Airflow data:
