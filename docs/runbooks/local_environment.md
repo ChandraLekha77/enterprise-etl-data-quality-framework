@@ -95,6 +95,10 @@ Open `http://127.0.0.1:8080` and sign in with `AIRFLOW_ADMIN_USERNAME` and `AIRF
 Open `http://127.0.0.1:8000/docs` for the reporting API contract. The API has
 no mutation routes, runs every query in a PostgreSQL read-only transaction,
 and binds only to loopback in the local environment.
+Open `http://127.0.0.1:8000/dashboard` and sign in with
+`REPORTING_DASHBOARD_USERNAME` and `REPORTING_DASHBOARD_PASSWORD`. API clients
+send `Authorization: Bearer <token>` using the viewer, operator, or
+administrator token configured in `.env`. Never place tokens in URLs or logs.
 
 ## Routine checks
 
@@ -207,10 +211,30 @@ reporting API returns masked failures. Correct the fixtures and replay the same
 delivery to demonstrate idempotent quality writes, no duplicate core rows, and
 watermark advancement only after successful promotion.
 
-Verification snapshot (2026-11-12): the host unit/API suite completed with
-154 passing tests. The previously completed dbt build contained 72 passing
+Verification snapshot (2026-11-12): the local suite completed with 158 passing
+tests, including dashboard, authentication, recovery, and a 10,000-row
+synthetic performance check. The previously completed dbt build contained 72 passing
 models/tests. Docker-dependent checks require Docker Desktop to be running; do
 not record a fresh live sign-off when the Docker engine is unavailable.
+
+After creating valid and mixed-quality Airflow runs, execute the live assertions:
+
+```powershell
+$env:RUN_E2E_TESTS = "1"
+$env:E2E_VALID_RUN_ID = "<successful warehouse run UUID>"
+$env:E2E_MIXED_RUN_ID = "<quarantined warehouse run UUID>"
+$env:REPORTING_API_URL = "http://127.0.0.1:8000"
+$env:REPORTING_VIEWER_TOKEN = "<viewer token from .env>"
+.\.venv\Scripts\python.exe -m pytest -q -m e2e tests/e2e
+```
+
+The unit suite covers bounded API failures, invalid responses, transactional
+rollback, replay, delivery conflicts, duplicate prevention, and failed-run
+watermark preservation. For live plan review, replace the placeholder UUID in
+`sql/postgresql/diagnostics/001_explain_reporting.sql` and run it against a
+populated non-production warehouse. Keep the indexes in
+`sql/postgresql/ddl/008_reporting_indexes.sql` only when measured plans show a
+useful scan or sort reduction.
 
 ## Stop and restart
 

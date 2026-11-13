@@ -8,6 +8,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from api.auth import AuthSettings, ReportingAuthMiddleware
+from api.dashboard import router as dashboard_router
 from api.routes.reports import router
 from etl_framework.reporting import ReportingError, ReportingRepository
 
@@ -20,7 +22,10 @@ async def _lifespan(app: FastAPI):
         repository.close()
 
 
-def create_app(repository: ReportingRepository | None = None) -> FastAPI:
+def create_app(
+    repository: ReportingRepository | None = None,
+    auth_settings: AuthSettings | None = None,
+) -> FastAPI:
     app = FastAPI(
         title="Enterprise ETL Quality Reports",
         version="1.0.0",
@@ -30,7 +35,12 @@ def create_app(repository: ReportingRepository | None = None) -> FastAPI:
     )
     app.state.reporting_repository = repository
     app.state.owns_reporting_repository = False
+    app.add_middleware(
+        ReportingAuthMiddleware,
+        settings=auth_settings or AuthSettings.from_env(),
+    )
     app.include_router(router)
+    app.include_router(dashboard_router)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(
