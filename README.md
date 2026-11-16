@@ -84,12 +84,19 @@ transactions.
 
 The operational dashboard is available at `http://127.0.0.1:8000/dashboard`.
 It includes run history, row-count cards, validation and reconciliation charts,
-filters, pagination, and run drill-down views. The browser uses HTTP Basic
+status/source/date filters, pagination, automatic refresh, CSV export, and run
+drill-down views. The browser uses HTTP Basic
 authentication with `REPORTING_DASHBOARD_USERNAME` and
 `REPORTING_DASHBOARD_PASSWORD`. API clients use a Bearer token from
 `REPORTING_ADMIN_TOKEN`, `REPORTING_OPERATOR_TOKEN`, or
 `REPORTING_VIEWER_TOKEN`. These define administrator, operator, and read-only
-roles. The reporting API remains read-only for every role.
+roles. Warehouse reporting routes remain read-only. The administrator and
+operator roles may use the separate `/api/v1/operator` routes to trigger a new
+Airflow run or corrected replay; read-only tokens receive HTTP 403.
+
+Authenticated operational metrics are available at `/metrics` in Prometheus
+text format. A host-only GitHub Actions workflow runs unit, API, recovery, and
+synthetic performance tests without requiring Docker.
 
 ## Delivery status
 

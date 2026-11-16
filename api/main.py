@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse
 
 from api.auth import AuthSettings, ReportingAuthMiddleware
 from api.dashboard import router as dashboard_router
+from api.metrics import Metrics, MetricsMiddleware, router as metrics_router
+from api.operator import AirflowClient, router as operator_router
 from api.routes.reports import router
 from etl_framework.reporting import ReportingError, ReportingRepository
 
@@ -25,6 +27,7 @@ async def _lifespan(app: FastAPI):
 def create_app(
     repository: ReportingRepository | None = None,
     auth_settings: AuthSettings | None = None,
+    airflow_client: AirflowClient | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Enterprise ETL Quality Reports",
@@ -35,12 +38,17 @@ def create_app(
     )
     app.state.reporting_repository = repository
     app.state.owns_reporting_repository = False
+    app.state.metrics = Metrics()
+    app.state.airflow_client = airflow_client
     app.add_middleware(
         ReportingAuthMiddleware,
         settings=auth_settings or AuthSettings.from_env(),
     )
     app.include_router(router)
     app.include_router(dashboard_router)
+    app.include_router(metrics_router)
+    app.include_router(operator_router)
+    app.add_middleware(MetricsMiddleware, metrics=app.state.metrics)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(

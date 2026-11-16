@@ -40,6 +40,11 @@ def test_dashboard_has_login_and_operational_views() -> None:
     assert "Reconciliation differences" in response.text
     assert "financial-totals" in response.text
     assert "page_size=10" in response.text
+    assert "Export CSV" in response.text
+    assert "Refresh 30s" in response.text
+    assert "All sources" in response.text
+    assert "Trigger pipeline" in response.text
+    assert "Replay" in response.text
 
 
 def test_invalid_credentials_are_rejected_without_echoing_secrets() -> None:
@@ -47,3 +52,15 @@ def test_invalid_credentials_are_rejected_without_echoing_secrets() -> None:
         response = client.get("/api/v1/runs", headers={"Authorization": "Bearer wrong-secret"})
     assert response.status_code == 401
     assert "wrong-secret" not in response.text
+
+
+def test_metrics_are_authenticated_and_avoid_dynamic_path_labels() -> None:
+    with TestClient(create_app(FakeRepository(), SETTINGS)) as client:
+        assert client.get("/metrics").status_code == 401
+        headers = {"Authorization": "Bearer viewer-token"}
+        assert client.get("/api/v1/runs", headers=headers).status_code == 200
+        response = client.get("/metrics", headers=headers)
+    assert response.status_code == 200
+    assert "reporting_http_requests_total" in response.text
+    assert 'route="/api/v1/runs"' in response.text
+    assert "viewer-token" not in response.text

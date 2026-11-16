@@ -52,7 +52,8 @@ class ReportingAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if not self.settings.enabled or not (
-            request.url.path == "/dashboard" or request.url.path.startswith("/api/v1")
+            request.url.path in {"/dashboard", "/metrics"}
+            or request.url.path.startswith("/api/v1")
         ):
             return await call_next(request)
         role = self._role(request.headers.get("authorization", ""))

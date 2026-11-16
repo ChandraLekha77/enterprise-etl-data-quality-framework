@@ -99,6 +99,15 @@ Open `http://127.0.0.1:8000/dashboard` and sign in with
 `REPORTING_DASHBOARD_USERNAME` and `REPORTING_DASHBOARD_PASSWORD`. API clients
 send `Authorization: Bearer <token>` using the viewer, operator, or
 administrator token configured in `.env`. Never place tokens in URLs or logs.
+The same Bearer tokens protect `/metrics`; use the viewer token for monitoring
+scrapes. The dashboard can filter by status, source and date, refresh itself,
+export the visible run page as CSV, and drill into batch and financial details.
+Administrators and operators can trigger a pipeline or corrected replay from
+the dashboard after an explicit confirmation. The reporting service obtains a
+short-lived Airflow JWT from `/auth/token` and calls the stable Airflow v2 DAG
+run endpoint. Viewer tokens cannot use these controls. The Compose service uses
+the configured Airflow administrator as its local operator service account;
+use a dedicated least-privilege Airflow account in a deployed environment.
 
 ## Routine checks
 
